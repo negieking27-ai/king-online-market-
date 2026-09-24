@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>King Online Market</title>
+<!-- Supabase JS Library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#172033}
+header{background:#243b8f;color:#fff;padding:18px 16px}.top{max-width:900px;margin:auto}
+h1{font-size:23px;margin:0 0 5px}.tagline{font-size:13px;opacity:.9}
+.search{margin-top:14px;width:100%;padding:13px;border:0;border-radius:10px;font-size:16px}
+main{max-width:900px;margin:auto;padding:18px 14px 70px}.hero,.modal-box{background:#fff;border-radius:16px;padding:20px;box-shadow:0 3px 12px #0001}
+.hero{margin-bottom:18px}.hero h2{margin-top:0}.hero p{color:#667085;line-height:1.5}
+.section-title{font-size:19px;margin:20px 0 12px}.categories{display:flex;gap:9px;overflow:auto}
+.cat{border:0;background:#fff;padding:11px 14px;border-radius:10px;white-space:nowrap;cursor:pointer}.cat.active{background:#243b8f;color:#fff}
+.products{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px #0001}
+.card img{width:100%;height:150px;object-fit:cover}.card-body{padding:12px}.price{font-weight:bold;color:#243b8f;margin:7px 0}
+.buy,.submit{width:100%;border:0;border-radius:9px;padding:12px;background:#243b8f;color:#fff;font-weight:bold;font-size:15px;cursor:pointer}
+.admin-btn{margin-top:12px;background:#fff;color:#243b8f;border:0;border-radius:9px;padding:10px 14px;font-weight:bold;cursor:pointer}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:50;padding:15px;overflow:auto}.modal-box{max-width:560px;margin:20px auto}
+.close{float:right;border:0;background:#eee;border-radius:8px;padding:8px 11px;cursor:pointer}
+label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #ccd1da;border-radius:9px;font-size:15px}
+textarea{min-height:80px}.submit{background:#079455;margin-top:16px}
+.notice{background:#eef4ff;color:#243b8f;padding:12px;border-radius:10px;margin-top:12px;line-height:1.5;font-size:13px}
+.order-item{background:#fff;border:1px solid #e0e4ec;border-radius:12px;padding:13px;margin-top:10px}.status{color:#243b8f;font-weight:bold}
+@media(min-width:700px){.products{grid-template-columns:repeat(4,1fr)}.card img{height:180px}}
+</style>
+</head>
+<body>
+<header><div class="top">
+<h1>King Online Market</h1><div class="tagline">Buy • Order • Get Delivered on Campus</div>
+<input id="search" class="search" placeholder="Search products...">
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+<button class="admin-btn" onclick="openModal('loginModal')" style="margin-top:0">🔒 Admin Panel</button>
+</div>
+</div></header>
+
+<main>
+<section class="hero"><h2>Welcome to King Online Market 🛍️</h2><p>Choose a product and place your campus delivery order.</p></section>
+<h2 class="section-title">Categories</h2><div id="categories" class="categories"></div>
+<h2 class="section-title">Products</h2><div id="products" class="products">Loading products...</div>
+</main>
+
+<div id="orderModal" class="modal"><div class="modal-box">
+<button class="close" onclick="closeModal('orderModal')">✕</button>
+<h2>📦 Place Your Order</h2>
+<div id="selectedProductPreview" style="margin-bottom:12px"></div>
+<p id="selectedProduct" style="font-weight:bold"></p>
+<form id="orderForm" onsubmit="submitOrder(event)">
+<label>Full Name *</label><input id="fullName" required>
+<label>Phone Number *</label><input id="phone" type="tel" required>
+<label>Student ID Number *</label><input id="studentId" required>
+<label>Block Number *</label><input id="block" required>
+<label>Dorm Number *</label><input id="dorm" required>
+<label>Section *</label><input id="section" required>
+<label>Department *</label><input id="department" required>
+<label>Quantity *</label><input id="quantity" type="number" min="1" value="1" required>
+<label>Student Photo</label><input id="photo" type="file" accept="image/*">
+<label>Delivery Note</label><textarea id="note" placeholder="Example: Please call me when you arrive."></textarea>
+<button class="submit" type="submit" id="orderSubmitBtn">✅ Place Order</button>
+</form></div></div>
+
+<div id="loginModal" class="modal"><div class="modal-box">
+<button class="close" onclick="closeModal('loginModal')">✕</button><h2>🔒 Admin Login</h2>
+<label>Email</label><input id="adminEmail" type="email"><label>Password</label><input id="adminPassword" type="password">
+<button class="submit" onclick="loginAdmin()">Login</button>
+</div></div>
+
+<div id="adminModal" class="modal"><div class="modal-box">
+<button class="close" onclick="closeModal('adminModal')">✕</button><h2>🧑‍💼 Admin Dashboard</h2>
+<button onclick="logoutAdmin()" style="background:#d92d20;color:#fff;border:0;padding:8px 12px;border-radius:6px;float:right;cursor:pointer">Logout</button>
+<h3>Orders</h3><div id="adminOrders">Loading orders...</div>
+<h3 style="margin-top:25px">Add Product</h3>
+<form id="productForm" onsubmit="addProduct(event)">
+<label>Product Name *</label><input id="pName" required>
+<label>Price (ETB) *</label><input id="pPrice" type="number" min="0" required>
+<label>Category</label><select id="pCategory"><option>Electronics</option><option>Clothes</option><option>Shoes</option><option>Bags</option><option>Books</option><option>Personal Care</option><option>Food & Snacks</option><option>Other</option></select>
+<label>Stock *</label><input id="pStock" type="number" min="0" value="1" required>
+<label>Product Image *</label><input id="pImage" type="file" accept="image/*" required>
+<label>Description</label><textarea id="pDescription"></textarea>
+<button class="submit" type="submit" id="pAddBtn">➕ Add Product</button>
+</form>
+<div id="adminProducts" style="margin-top:15px"></div>
+</div></div>
+
+<script>
+// Supabase Configuration
+const SUPABASE_URL = 'https://qdtgjhddpdfntcyxxlwz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Ir3qLO57DWf3Kgstrt-Ueg_yaENtyTh';
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let products = [], orders = [];
+let selectedProduct = null, selectedCategory = "All";
+
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>"']/g, function(ch){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch];
+  });
+}
+
+function openModal(id){document.getElementById(id).style.display="block"}
+function closeModal(id){document.getElementById(id).style.display="none"}
+
+// Load Products from Supabase
+async function fetchProducts(){
+  const { data, error } = await db.from('products').select('*').order('created_at', { ascending: false });
+  if(error) { console.error(error); alert("Error fetching products: " + error.message); return; }
+  products = data || [];
+  render();
+}
+
+function render(){
+  const cats = ["All", ...new Set(products.map(p => p.category).filter(Boolean))];
+  document.getElementById("categories").innerHTML = cats.map(c => `<button class="cat ${c===selectedCategory?'active':''}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("");
+  
+  const q = document.getElementById("search").value.toLowerCase().trim();
+  const list = products.filter(p => (selectedCategory === "All" || p.category === selectedCategory) && (!q || p.name.toLowerCase().includes(q) || (p.category && p.category.toLowerCase().includes(q))));
+  
+  document.getElementById("products").innerHTML = list.map(p => `
+    <article class="card">
+      <img src="${p.image_url || 'https://via.placeholder.com/150'}" alt="${p.name}">
+      <div class="card-body">
+        <b>${p.name}</b>
+        <div class="price">ETB ${Number(p.price).toLocaleString()}</div>
+        <small>Stock: ${p.stock}</small>
+        <button class="buy" style="margin-top:9px" onclick="openOrder(${p.id})">Order Now</button>
+      </div>
+    </article>
+  `).join("") || "<div class='order-item'>No products found.</div>";
+}
+
+function setCategory(c){ selectedCategory = c; render(); }
+document.getElementById("search").addEventListener("input", render);
+
+function openOrder(id){
+  selectedProduct = products.find(p => p.id === id);
+  if(!selectedProduct){ alert("Product not found."); return; }
+
+  document.getElementById("selectedProduct").textContent =
+    selectedProduct.name + " — ETB " + Number(selectedProduct.price).toLocaleString();
+
+  document.getElementById("selectedProductPreview").innerHTML = `
+    <div style="display:flex;gap:12px;align-items:center;background:#f7f9fc;padding:10px;border-radius:12px">
+      <img src="${selectedProduct.image_url || 'https://via.placeholder.com/120'}"
+           alt="${escapeHtml(selectedProduct.name)}"
+           style="width:90px;height:90px;object-fit:cover;border-radius:10px">
+      <div>
+        <b>${escapeHtml(selectedProduct.name)}</b><br>
+        <span>ETB ${Number(selectedProduct.price).toLocaleString()}</span><br>
+        <small>Stock: ${selectedProduct.stock}</small>
+      </div>
+    </div>`;
+
+  document.getElementById("orderForm").reset();
+  document.getElementById("quantity").value = 1;
+  openModal("orderModal");
+}
+
+// Submit Order to Supabase
+async function submitOrder(e){
+  e.preventDefault();
+
+  if(!selectedProduct){ alert("Please select a product first."); return; }
+
+  const qty = Number(document.getElementById("quantity").value);
+  if(!qty || qty < 1){ alert("Please enter a valid quantity."); return; }
+  if(qty > Number(selectedProduct.stock)){
+    alert("Only " + selectedProduct.stock + " item(s) are available.");
+    return;
+  }
+
+  const btn = document.getElementById("orderSubmitBtn");
+  btn.disabled = true;
+  btn.textContent = "Submitting Order...";
+
+  let photoPath = null;
+  const photoFile = document.getElementById("photo").files[0];
+
+  if(photoFile){
+    const safeName = photoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const fileName = `student_${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
+
+    const { data: uploadData, error: uploadErr } =
+      await db.storage.from("student-photos").upload(fileName, photoFile, {
+        upsert: false,
+        contentType: photoFile.type
+      });
+
+    if(uploadErr){
+      alert("Student photo upload failed: " + uploadErr.message);
+      btn.disabled = false;
+      btn.textContent = "✅ Place Order";
+      return;
+    }
+
+    if(uploadData) photoPath = uploadData.path;
+  }
+
+  const newOrder = {
+    product_id: selectedProduct.id,
+    quantity: qty,
+    full_name: document.getElementById("fullName").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    student_id: document.getElementById("studentId").value.trim(),
+    block_number: document.getElementById("block").value.trim(),
+    dorm_number: document.getElementById("dorm").value.trim(),
+    section: document.getElementById("section").value.trim(),
+    department: document.getElementById("department").value.trim(),
+    delivery_note: document.getElementById("note").value.trim(),
+    student_photo_url: photoPath,
+    status: "New Order"
+  };
+
+  const { data, error } = await db.from("orders").insert([newOrder]).select();
+
+  btn.disabled = false;
+  btn.textContent = "✅ Place Order";
+
+  if(error){
+    alert("❌ Order Failed: " + error.message);
+    return;
+  }
+
+  const { error: stockError } = await db.from("products")
+    .update({ stock: selectedProduct.stock - qty })
+    .eq("id", selectedProduct.id);
+
+  if(stockError) console.error("Stock update failed:", stockError);
+
+  closeModal("orderModal");
+  document.getElementById("orderForm").reset();
+  fetchProducts();
+  alert("✅ ORDER PLACED SUCCESSFULLY!\n\nOrder ID: " + data[0].id);
+}
+
+// Admin Auth and Management
+async function loginAdmin(){
+  const email = document.getElementById("adminEmail").value.trim();
+  const password = document.getElementById("adminPassword").value;
+
+  const { data, error } = await db.auth.signInWithPassword({ email, password });
+  if(error){
+    alert("❌ Login Failed: " + error.message);
+    return;
+  }
+
+  const { data: roleRow, error: roleError } = await db
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", data.user.id)
+    .maybeSingle();
+
+  if(roleError || !roleRow || roleRow.role !== "admin"){
+    await db.auth.signOut();
+    alert("❌ This account is not an Admin account.");
+    return;
+  }
+
+  closeModal("loginModal");
+  await renderAdmin();
+  openModal("adminModal");
+}
+
+async function logoutAdmin(){
+  await db.auth.signOut();
+  closeModal("adminModal");
+  alert("Logged out.");
+}
+
+async function renderAdmin(){
+  const { data: fetchedOrders, error: err1 } = await db
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if(err1){
+    document.getElementById("adminOrders").innerHTML =
+      "<p>Could not load orders: " + escapeHtml(err1.message) + "</p>";
+    return;
+  }
+
+  orders = fetchedOrders || [];
+  const productMap = new Map(products.map(p => [String(p.id), p]));
+  const cards = [];
+
+  for(const o of orders){
+    const product = productMap.get(String(o.product_id));
+    let studentPhotoHtml = "";
+
+    if(o.student_photo_url){
+      const { data: signedData, error: signedError } = await db.storage
+        .from("student-photos")
+        .createSignedUrl(o.student_photo_url, 600);
+
+      if(!signedError && signedData?.signedUrl){
+        studentPhotoHtml = `
+          <div style="margin-top:10px">
+            <b>Student Photo:</b><br>
+            <img src="${signedData.signedUrl}" alt="Student"
+                 style="width:120px;height:120px;object-fit:cover;border-radius:12px;margin-top:6px">
+          </div>`;
+      } else {
+        studentPhotoHtml =
+          `<br><small>Student photo saved, but could not be opened: ${escapeHtml(signedError?.message || "unknown error")}</small>`;
+      }
+    }
+
+    cards.push(`
+      <div class="order-item">
+        <div style="display:flex;gap:12px;align-items:center;background:#f7f9fc;padding:10px;border-radius:12px">
+          <img src="${product?.image_url || 'https://via.placeholder.com/120'}"
+               alt="${escapeHtml(product?.name || 'Product')}"
+               style="width:90px;height:90px;object-fit:cover;border-radius:10px">
+          <div>
+            <b>📦 ${escapeHtml(product?.name || "Product")}</b><br>
+            <span>Price: ETB ${Number(product?.price || 0).toLocaleString()}</span><br>
+            <span>Quantity: ${o.quantity}</span>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <b>Order ID:</b> ${escapeHtml(o.id)}<br>
+          <span class="status">Status: ${escapeHtml(o.status)}</span><br>
+          <small>Date: ${new Date(o.created_at).toLocaleString()}</small><br><br>
+          <small>
+            <b>Student:</b> ${escapeHtml(o.full_name)}<br>
+            <b>Phone:</b> ${escapeHtml(o.phone)}<br>
+            <b>ID:</b> ${escapeHtml(o.student_id)}<br>
+            <b>Block:</b> ${escapeHtml(o.block_number)} • <b>Dorm:</b> ${escapeHtml(o.dorm_number)}<br>
+            <b>Department:</b> ${escapeHtml(o.department)} • <b>Section:</b> ${escapeHtml(o.section)}
+          </small>
+          ${o.delivery_note ? "<br><small><b>Note:</b> " + escapeHtml(o.delivery_note) + "</small>" : ""}
+          ${studentPhotoHtml}
+          <select onchange="changeStatus('${escapeHtml(o.id)}', this.value)"
+                  style="margin-top:10px;width:100%;padding:9px">
+            ${["New Order","Confirmed","Collecting Product","Product Received","Out for Delivery","Delivered","Cancelled"]
+              .map(s => `<option ${s===o.status ? "selected" : ""}>${s}</option>`).join("")}
+          </select>
+        </div>
+      </div>`);
+  }
+
+  document.getElementById("adminOrders").innerHTML =
+    cards.join("") || "<p>No orders yet.</p>";
+
+  document.getElementById("adminProducts").innerHTML = products.map(p => `
+    <div class="order-item" style="display:flex;gap:12px;align-items:center">
+      <img src="${p.image_url || 'https://via.placeholder.com/100'}"
+           alt="${escapeHtml(p.name)}"
+           style="width:70px;height:70px;object-fit:cover;border-radius:9px">
+      <div><b>${escapeHtml(p.name)}</b><br>
+      ETB ${Number(p.price).toLocaleString()} • Stock: ${p.stock} (order limit off)</div>
+    </div>
+  `).join("");
+}
+
+async function changeStatus(id, newStatus){
+  const { error } = await db.from('orders').update({ status: newStatus }).eq('id', id);
+  if(error){ alert("Failed to update status: " + error.message); }
+  else { renderAdmin(); }
+}
+
+async function addProduct(e){
+  e.preventDefault();
+  const file = document.getElementById("pImage").files[0];
+  if(!file){ alert("Please select a product image."); return; }
+
+  const btn = document.getElementById("pAddBtn");
+  btn.disabled = true; btn.textContent = "Uploading & Adding...";
+
+  const fileName = `product_${Date.now()}_${file.name}`;
+  const { data: uploadData, error: uploadErr } = await db.storage.from('product-images').upload(fileName, file);
+
+  if(uploadErr){
+    alert("Image Upload Failed: " + uploadErr.message);
+    btn.disabled = false; btn.textContent = "➕ Add Product";
+    return;
+  }
+
+  const { data: urlData } = db.storage.from('product-images').getPublicUrl(fileName);
+
+  const newProd = {
+    name: document.getElementById("pName").value.trim(),
+    price: Number(document.getElementById("pPrice").value),
+    category: document.getElementById("pCategory").value,
+    stock: Number(document.getElementById("pStock").value),
+    description: document.getElementById("pDescription").value.trim(),
+    image_url: urlData.publicUrl
+  };
+
+  const { error } = await db.from('products').insert([newProd]);
+
+  btn.disabled = false; btn.textContent = "➕ Add Product";
+
+  if(error){
+    alert("Failed to add product: " + error.message);
+  } else {
+    e.target.reset();
+    fetchProducts();
+    renderAdmin();
+    alert("✅ Product added successfully to Supabase!");
+  }
+}
+
+// Real-time Listener
+db.channel('schema-db-changes')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+    fetchProducts();
+  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+    if (document.getElementById("adminModal").style.display === "block") {
+      renderAdmin();
+    }
+  })
+  .subscribe();
+
+// Restore current login session
+db.auth.getSession().then(({ data }) => updateSessionUI(data.session));
+db.auth.onAuthStateChange((_event, session) => updateSessionUI(session));
+
+// Initial Fetch
+fetchProducts();
+</script>
+</body>
+</html>
