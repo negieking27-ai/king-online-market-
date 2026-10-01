@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>King Online Market</title>
-<!-- Supabase JS Library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#172033}
@@ -21,6 +20,11 @@ main{max-width:900px;margin:auto;padding:18px 14px 70px}.hero,.modal-box{backgro
 .buy,.submit{width:100%;border:0;border-radius:9px;padding:12px;background:#243b8f;color:#fff;font-weight:bold;font-size:15px;cursor:pointer}
 .buy.soldout{background:#98a2b3;cursor:not-allowed}
 .admin-btn{margin-top:12px;background:#fff;color:#243b8f;border:0;border-radius:9px;padding:10px 14px;font-weight:bold;cursor:pointer}
+.top-actions{display:none!important}
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:45;background:#fff;border-top:1px solid #e4e7ec;display:grid;grid-template-columns:repeat(4,1fr);box-shadow:0 -3px 14px #0001;padding:7px 4px calc(7px + env(safe-area-inset-bottom))}
+.bottom-nav button{border:0;background:transparent;color:#475467;font-size:11px;font-weight:bold;padding:7px 2px;cursor:pointer}
+.bottom-nav button span{display:block;font-size:19px;line-height:20px;margin-bottom:2px}
+.gallery{display:flex;gap:8px;overflow:auto;margin-top:8px}.gallery img{width:72px;height:72px;object-fit:cover;border-radius:9px;flex:0 0 auto}
 .badge{display:none;background:#d92d20;color:#fff;border-radius:10px;padding:2px 8px;font-size:12px;margin-left:4px}
 .modal{display:none;position:fixed;inset:0;background:#0008;z-index:50;padding:15px;overflow:auto}.modal-box{max-width:560px;margin:20px auto}
 .close{float:right;border:0;background:#eee;border-radius:8px;padding:8px 11px;cursor:pointer}
@@ -35,72 +39,193 @@ textarea{min-height:80px}.submit{background:#079455;margin-top:16px}
 </head>
 <body>
 <header><div class="top">
-<h1>King Online Market</h1><div class="tagline">Buy • Order • Get Delivered on Campus</div>
+<h1>King Online Market</h1>
+<div class="tagline">Buy • Order • Get Delivered on Campus</div>
 <input id="search" class="search" placeholder="Search products...">
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+<div class="top-actions">
+<div id="authArea" style="display:contents"></div>
 <button class="admin-btn" onclick="openAdminPanel()" style="margin-top:0">🔒 Admin Panel<span id="adminBadge" class="badge"></span></button>
 </div>
 </div></header>
 
 <main>
-<section class="hero"><h2>Welcome to King Online Market 🛍️</h2><p>Choose a product and place your campus delivery order.</p>
-<div id="contactBox" class="notice" style="display:none"></div></section>
-<h2 class="section-title">Categories</h2><div id="categories" class="categories"></div>
-<h2 class="section-title">Products</h2><div id="products" class="products">Loading products...</div>
+<section class="hero">
+<h2>Welcome to King Online Market 🛍️</h2>
+<p>Choose a product and place your campus delivery order.</p>
+<div id="contactBox" class="notice" style="display:none"></div>
+</section>
+
+<h2 class="section-title">Categories</h2>
+<div id="categories" class="categories"></div>
+
+<h2 class="section-title">Products</h2>
+<div id="products" class="products">Loading products...</div>
 </main>
+
+<nav class="bottom-nav" aria-label="Main navigation">
+<button onclick="scrollToProducts()"><span>🛍️</span>Products</button>
+<button onclick="openMyOrdersNav()"><span>📦</span>My Orders</button>
+<button onclick="openSignInNav()"><span>👤</span>Sign in</button>
+<button onclick="openAdminPanel()"><span>🔒</span>Admin Login</button>
+</nav>
 
 <div id="orderModal" class="modal"><div class="modal-box">
 <button class="close" onclick="closeModal('orderModal')">✕</button>
 <h2>📦 Place Your Order</h2>
 <div id="selectedProductPreview" style="margin-bottom:12px"></div>
 <p id="selectedProduct" style="font-weight:bold"></p>
+
 <form id="orderForm" onsubmit="submitOrder(event)">
-<label>Full Name *</label><input id="fullName" required>
-<label>Phone Number *</label><input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="09xxxxxxxx or 07xxxxxxxx" required>
-<label>Student ID Number *</label><input id="studentId" required>
-<label>Block Number *</label><input id="block" required>
-<label>Dorm Number *</label><input id="dorm" required>
-<label>Section *</label><input id="section" required>
-<label>Department *</label><input id="department" required>
-<label>Quantity *</label><input id="quantity" type="number" min="1" value="1" required>
+<label>Full Name *</label>
+<input id="fullName" required>
+
+<label>Phone Number *</label>
+<input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="09xxxxxxxx or 07xxxxxxxx" required>
+
+<label>Student ID Number *</label>
+<input id="studentId" required>
+
+<label>Block Number *</label>
+<input id="block" required>
+
+<label>Dorm Number *</label>
+<input id="dorm" required>
+
+<label>Section *</label>
+<input id="section" required>
+
+<label>Department *</label>
+<input id="department" required>
+
+<label>Quantity *</label>
+<input id="quantity" type="number" min="1" value="1" required>
+
+<div class="notice">
+💰 <b>ቅድመ ክፍያ (Deposit) ያስፈልጋል</b><br>
+ብር <span id="depositAmount"></span> ከታች ካሉት አንዱ ላይ ይላኩ፦<br>
+<div id="depositAccounts" style="margin:6px 0"></div>
+የሂሳብ ባለቤት፦ <b><span id="depositName"></span></b><br>
+ከዚያ የክፍያ screenshot ከታች ይጫኑ።
+ያለ ማረጋገጫ ትዕዛዙ አይስተናገድም።
+</div>
+
+<label>Payment Screenshot *</label>
+<button type="button" class="close" style="float:none;width:100%;padding:12px" onclick="document.getElementById('paymentProofInput').click()">🧾 Upload payment screenshot</button>
+<input id="paymentProofInput" type="file" accept="image/*" hidden onchange="setPaymentProof(this)">
+<div id="paymentProofPreview" style="margin-top:10px"></div>
+
+<label>Transaction Reference (optional)</label>
+<input id="paymentRef" placeholder="e.g. Telebirr confirmation code">
+
 <label>Student Photo (optional)</label>
 <div style="display:flex;gap:8px">
 <button type="button" class="close" style="float:none;flex:1;padding:12px" onclick="document.getElementById('photoCamera').click()">📷 Take photo</button>
 <button type="button" class="close" style="float:none;flex:1;padding:12px" onclick="document.getElementById('photoGallery').click()">🖼️ Choose from gallery</button>
 </div>
+
 <input id="photoCamera" type="file" accept="image/*" capture="user" hidden onchange="setPhoto(this)">
 <input id="photoGallery" type="file" accept="image/*" hidden onchange="setPhoto(this)">
 <div id="photoPreview" style="margin-top:10px"></div>
-<label>Delivery Note</label><textarea id="note" placeholder="Example: Please call me when you arrive."></textarea>
+
+<label>Delivery Note</label>
+<textarea id="note" placeholder="Example: Please call me when you arrive."></textarea>
+
 <button class="submit" type="submit" id="orderSubmitBtn">✅ Place Order</button>
-</form></div></div>
+</form>
+</div></div>
+
+<div id="authModal" class="modal"><div class="modal-box">
+<button class="close" onclick="closeModal('authModal')">✕</button>
+<h2 id="authTitle">👤 Login</h2>
+<div id="authNotice" class="notice" style="display:none"></div>
+
+<div id="signupFields" style="display:none">
+<label>Full Name *</label><input id="suName" autocomplete="name">
+<label>Phone Number *</label><input id="suPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="09xxxxxxxx or 07xxxxxxxx">
+<label>Student ID Number *</label><input id="suStudentId">
+</div>
+
+<label>Email *</label><input id="authEmail" type="email" autocomplete="email">
+<label>Password *</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters">
+
+<button class="submit" id="authSubmitBtn" onclick="submitAuth()">Login</button>
+<p style="text-align:center;margin:14px 0 0;font-size:14px">
+<a href="javascript:void(0)" id="authToggle" onclick="toggleAuthMode()" style="color:#243b8f;font-weight:bold"></a>
+</p>
+</div></div>
+
+<div id="myOrdersModal" class="modal"><div class="modal-box">
+<button class="close" onclick="closeModal('myOrdersModal')">✕</button>
+<h2>📦 My Orders</h2>
+<div id="myOrdersList">Loading...</div>
+</div></div>
+
+<div id="detailModal" class="modal"><div class="modal-box">
+<button class="close" onclick="closeModal('detailModal')">✕</button>
+<div id="detailContent"></div>
+</div></div>
 
 <div id="loginModal" class="modal"><div class="modal-box">
-<button class="close" onclick="closeModal('loginModal')">✕</button><h2>🔒 Admin Login</h2>
-<label>Email</label><input id="adminEmail" type="email"><label>Password</label><input id="adminPassword" type="password">
+<button class="close" onclick="closeModal('loginModal')">✕</button>
+<h2>🔒 Admin Login</h2>
+<label>Email</label><input id="adminEmail" type="email">
+<label>Password</label><input id="adminPassword" type="password">
 <button class="submit" onclick="loginAdmin()">Login</button>
 </div></div>
 
 <div id="adminModal" class="modal"><div class="modal-box">
-<button class="close" onclick="closeModal('adminModal')">✕</button><h2>🧑‍💼 Admin Dashboard</h2>
+<button class="close" onclick="closeModal('adminModal')">✕</button>
+<h2>🧑‍💼 Admin Dashboard</h2>
 <button onclick="logoutAdmin()" style="background:#d92d20;color:#fff;border:0;padding:8px 12px;border-radius:6px;float:right;cursor:pointer">Logout</button>
+
 <h3>Orders</h3>
 <div id="adminOrders">Loading orders...</div>
+
+<h3 style="margin-top:25px">💰 Deposit Settings</h3>
+<div class="notice">Set the required prepayment amount. Students will see the current amount when ordering.</div>
+<label>Deposit Amount (ETB)</label>
+<input id="adminDepositAmount" type="number" min="0" step="1">
+<button type="button" class="submit" onclick="saveDepositAmount()">💾 Save Deposit Amount</button>
+
 <h3 style="margin-top:25px">Add Product</h3>
 <form id="productForm" onsubmit="addProduct(event)">
 <label>Product Name *</label><input id="pName" required>
 <label>Price (ETB) *</label><input id="pPrice" type="number" min="0" required>
-<label>Category</label><select id="pCategory"><option>Electronics</option><option>Clothes</option><option>Shoes</option><option>Bags</option><option>Books</option><option>Personal Care</option><option>Food & Snacks</option><option>Other</option></select>
-<label>Product Image *</label><input id="pImage" type="file" accept="image/*" required>
-<label>Description</label><textarea id="pDescription"></textarea>
+
+<label>Category</label>
+<select id="pCategory">
+<option>Electronics</option>
+<option>Clothes</option>
+<option>Shoes</option>
+<option>Bags</option>
+<option>Books</option>
+<option>Personal Care</option>
+<option>Food & Snacks</option>
+<option>Other</option>
+</select>
+
+<label>Product Images * (1–5)</label>
+<input id="pImage" type="file" accept="image/*" multiple required>
+<small style="color:#667085">Choose up to 5 images. The first image will be the main image.</small>
+<div id="pImagePreview" class="gallery"></div>
+
+<label>Description</label>
+<textarea id="pDescription" placeholder="Short description shown in product details."></textarea>
+
+<label>Specifications (optional)</label>
+<textarea id="pSpecs" placeholder="One per line, e.g.
+RAM: 8GB
+Storage: 128GB
+Color: Black"></textarea>
+
 <button class="submit" type="submit" id="pAddBtn">➕ Add Product</button>
 </form>
+
 <h3 style="margin-top:25px">Products</h3>
 <div id="adminProducts" style="margin-top:15px"></div>
 </div></div>
 
 <script>
-// Supabase Configuration
 const SUPABASE_URL = 'https://qdtgjhddpdfntcyxxlwz.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Ir3qLO57DWf3Kgstrt-Ueg_yaENtyTh';
 
@@ -110,554 +235,518 @@ let products = [], orders = [];
 let selectedProduct = null, selectedCategory = "All";
 let adminSignedIn = false;
 
-const STATUSES = ["New Order","Confirmed","Collecting Product","Product Received","Out for Delivery","Delivered","Cancelled"];
+const STATUSES = [
+"New Order",
+"Confirmed",
+"Collecting Product",
+"Product Received",
+"Out for Delivery",
+"Delivered",
+"Cancelled"
+];
 
 const PLACEHOLDER = "https://via.placeholder.com/150";
 
-// ===== Contact info (change these) =====
-const CONTACT_PHONE = "0993758814";      // your phone number
-const TELEGRAM_USERNAME = "";            // e.g. "kingmarket" (without @), leave empty to hide
+const CONTACT_PHONE = "0993758814";
+const TELEGRAM_USERNAME = "";
+
+let DEPOSIT_AMOUNT = 50;
+
+const ACCOUNT_NAME = "Negesse Azmeraw";
+
+const PAYMENT_OPTIONS = [
+{ provider: "CBE", account: "1000475329997" },
+{ provider: "BOA", account: "39928388" },
+{ provider: "Telebirr", account: "0932160991" }
+];
+
+function renderDepositInfo(){
+document.getElementById("depositAmount").textContent =
+Number(DEPOSIT_AMOUNT).toLocaleString();
+
+document.getElementById("depositName").textContent =
+ACCOUNT_NAME;
+
+document.getElementById("depositAccounts").innerHTML =
+PAYMENT_OPTIONS.map(o =>
+`<b>${escapeHtml(o.provider)}:</b> ${escapeHtml(o.account)}`
+).join("<br>");
+}
 
 function escapeHtml(value){
-  return String(value ?? "").replace(/[&<>"']/g, function(ch){
-    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch];
-  });
+return String(value ?? "").replace(/[&<>"']/g,function(ch){
+return {
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#039;"
+}[ch];
+});
 }
 
 function renderContact(){
-  const box = document.getElementById("contactBox");
-  if(!CONTACT_PHONE || CONTACT_PHONE.includes("X")) return;
-  const tel = CONTACT_PHONE.replace(/\s/g, "");
-  let html = `<b>Need help with your order?</b><br>📞 <a href="tel:${escapeHtml(tel)}" style="color:#243b8f;font-weight:bold">${escapeHtml(CONTACT_PHONE)}</a>`;
-  if(TELEGRAM_USERNAME){
-    html += ` &nbsp;•&nbsp; ✈️ <a href="https://t.me/${escapeHtml(TELEGRAM_USERNAME)}" target="_blank" rel="noopener" style="color:#243b8f;font-weight:bold">Telegram</a>`;
-  }
-  box.innerHTML = html;
-  box.style.display = "block";
+const box=document.getElementById("contactBox");
+
+if(!CONTACT_PHONE || CONTACT_PHONE.includes("X")) return;
+
+const tel=CONTACT_PHONE.replace(/\s/g,"");
+
+let html=`<b>Need help with your order?</b><br>
+📞 <a href="tel:${escapeHtml(tel)}"
+style="color:#243b8f;font-weight:bold">${escapeHtml(CONTACT_PHONE)}</a>`;
+
+if(TELEGRAM_USERNAME){
+html+=` &nbsp;•&nbsp; ✈️
+<a href="https://t.me/${escapeHtml(TELEGRAM_USERNAME)}"
+target="_blank" rel="noopener"
+style="color:#243b8f;font-weight:bold">Telegram</a>`;
 }
 
-function openModal(id){document.getElementById(id).style.display="block"}
-function closeModal(id){document.getElementById(id).style.display="none"}
+box.innerHTML=html;
+box.style.display="block";
+}
 
-// ===== Products =====
+function openModal(id){
+document.getElementById(id).style.display="block";
+}
+
+function closeModal(id){
+document.getElementById(id).style.display="none";
+}
+
 async function fetchProducts(){
-  const { data, error } = await db.from('products').select('*').order('created_at', { ascending: false });
-  if(error) { console.error(error); alert("Error fetching products: " + error.message); return; }
-  products = data || [];
-  render();
+const {data,error}=await db
+.from('products')
+.select('*')
+.order('created_at',{ascending:false});
+
+if(error){
+console.error(error);
+alert("Error fetching products: "+error.message);
+return;
 }
 
-function isSoldOut(p){ return Number(p.stock ?? 1) <= 0; }
+products=data||[];
+render();
+}
+
+function isSoldOut(p){
+return Number(p.stock ?? 1)<=0;
+}
 
 function render(){
-  const cats = ["All", ...new Set(products.map(p => p.category).filter(Boolean))];
-  document.getElementById("categories").innerHTML = cats.map(c => `<button class="cat ${c===selectedCategory?'active':''}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${escapeHtml(c)}</button>`).join("");
+const cats=["All",...new Set(products.map(p=>p.category).filter(Boolean))];
 
-  const q = document.getElementById("search").value.toLowerCase().trim();
-  const list = products.filter(p => (selectedCategory === "All" || p.category === selectedCategory) && (!q || p.name.toLowerCase().includes(q) || (p.category && p.category.toLowerCase().includes(q))));
+document.getElementById("categories").innerHTML=cats.map(c=>
+`<button class="cat ${c===selectedCategory?'active':''}"
+onclick="setCategory('${c.replace(/'/g,"\\'")}')">${escapeHtml(c)}</button>`
+).join("");
 
-  document.getElementById("products").innerHTML = list.map(p => {
-    const sold = isSoldOut(p);
-    return `
-    <article class="card ${sold ? 'soldout' : ''}">
-      <img src="${escapeHtml(p.image_url || PLACEHOLDER)}" alt="${escapeHtml(p.name)}">
-      <div class="card-body">
-        <b>${escapeHtml(p.name)}</b>
-        <div class="price">ETB ${Number(p.price).toLocaleString()}</div>
-        <button class="buy ${sold ? 'soldout' : ''}" style="margin-top:9px" onclick="openOrder(${p.id})">${sold ? 'Sold out' : 'Order Now'}</button>
-      </div>
-    </article>`;
-  }).join("") || "<div class='order-item'>No products found.</div>";
+const q=document.getElementById("search").value.toLowerCase().trim();
+
+const list=products.filter(p=>
+(selectedCategory==="All"||p.category===selectedCategory)&&
+(!q||p.name.toLowerCase().includes(q)||
+(p.category&&p.category.toLowerCase().includes(q)))
+);
+
+document.getElementById("products").innerHTML=list.map(p=>{
+const sold=isSoldOut(p);
+
+return `
+<article class="card ${sold?'soldout':''}">
+<img src="${escapeHtml((Array.isArray(p.image_urls)&&p.image_urls[0])||p.image_url||PLACEHOLDER)}"
+alt="${escapeHtml(p.name)}">
+
+<div class="card-body">
+<b>${escapeHtml(p.name)}</b>
+<div class="price">ETB ${Number(p.price).toLocaleString()}</div>
+
+<a href="javascript:void(0)"
+onclick="showDetail(${p.id})"
+style="font-size:12px;color:#243b8f;font-weight:bold;text-decoration:underline">
+View Detail
+</a>
+
+<button class="buy ${sold?'soldout':''}"
+style="margin-top:9px"
+onclick="openOrder(${p.id})">
+${sold?'Sold out':'Order Now'}
+</button>
+</div>
+</article>`;
+}).join("")||"<div class='order-item'>No products found.</div>";
 }
 
-function setCategory(c){ selectedCategory = c; render(); }
-document.getElementById("search").addEventListener("input", render);
+function setCategory(c){
+selectedCategory=c;
+render();
+}
+
+document.getElementById("search").addEventListener("input",render);
+
+function scrollToProducts(){
+document.getElementById("products").scrollIntoView({
+behavior:"smooth",
+block:"start"
+});
+}
+
+function openMyOrdersNav(){
+openMyOrders();
+}
+
+function openSignInNav(){
+openAuth("login");
+}
+
+document.getElementById("pImage").addEventListener("change",function(){
+const files=Array.from(this.files||[]);
+
+if(files.length>5){
+alert("❌ You can select up to 5 images.");
+this.value="";
+document.getElementById("pImagePreview").innerHTML="";
+return;
+}
+
+document.getElementById("pImagePreview").innerHTML=
+files.map(f=>
+`<img src="${URL.createObjectURL(f)}" alt="preview">`
+).join("");
+});
+
+function parseSpecs(text){
+return String(text||"")
+.split("\n")
+.map(l=>l.trim())
+.filter(Boolean)
+.map(line=>{
+const i=line.indexOf(":");
+return i===-1?[line,""]:[
+line.slice(0,i).trim(),
+line.slice(i+1).trim()
+];
+});
+}
+
+function showDetail(id){
+const p=products.find(x=>x.id===id);
+if(!p)return;
+
+const sold=isSoldOut(p);
+const specs=parseSpecs(p.specs);
+
+const specsHtml=specs.length?`
+<table style="width:100%;border-collapse:collapse;margin-top:10px">
+${specs.map(([k,v])=>`
+<tr style="border-top:1px solid #eef0f4">
+<td style="padding:7px 4px;color:#667085;font-size:13px;width:42%">
+${escapeHtml(k)}
+</td>
+<td style="padding:7px 4px;font-size:13px;font-weight:bold">
+${escapeHtml(v)}
+</td>
+</tr>`).join("")}
+</table>`:"";
+
+const imageList=
+Array.isArray(p.image_urls)&&p.image_urls.length
+?p.image_urls
+:(p.image_url?[p.image_url]:[]);
+
+const mainImage=imageList[0]||PLACEHOLDER;
+
+const galleryHtml=imageList.length>1?
+`<div class="gallery">
+${imageList.map(u=>
+`<img src="${escapeHtml(u)}" alt="${escapeHtml(p.name)}">`
+).join("")}
+</div>`:"";
+
+document.getElementById("detailContent").innerHTML=`
+<img src="${escapeHtml(mainImage)}"
+alt="${escapeHtml(p.name)}"
+style="width:100%;max-height:220px;object-fit:cover;border-radius:12px">
+
+${galleryHtml}
+
+<h2 style="margin:14px 0 2px">${escapeHtml(p.name)}</h2>
+
+<div class="price" style="font-size:18px">
+ETB ${Number(p.price).toLocaleString()}
+</div>
+
+<div style="font-weight:bold;color:${sold?'#d92d20':'#079455'};margin-bottom:6px">
+${sold?'Sold out':'Available'}
+</div>
+
+${p.description?
+`<p style="color:#667085;line-height:1.5">${escapeHtml(p.description)}</p>`:""}
+
+${specsHtml}
+
+<button class="buy ${sold?'soldout':''}"
+style="margin-top:16px"
+onclick="closeModal('detailModal');openOrder(${p.id})"
+${sold?"disabled":""}>
+${sold?'Sold out':'Order Now'}
+</button>`;
+
+openModal("detailModal");
+}
 
 function openOrder(id){
-  selectedProduct = products.find(p => p.id === id);
-  if(!selectedProduct){ alert("Product not found."); return; }
-  if(isSoldOut(selectedProduct)){ alert("Sorry, this product is sold out."); return; }
+selectedProduct=products.find(p=>p.id===id);
 
-  document.getElementById("selectedProduct").textContent =
-    selectedProduct.name + " — ETB " + Number(selectedProduct.price).toLocaleString();
-
-  document.getElementById("selectedProductPreview").innerHTML = `
-    <div style="display:flex;gap:12px;align-items:center;background:#f7f9fc;padding:10px;border-radius:12px">
-      <img src="${escapeHtml(selectedProduct.image_url || PLACEHOLDER)}"
-           alt="${escapeHtml(selectedProduct.name)}"
-           style="width:90px;height:90px;object-fit:cover;border-radius:10px">
-      <div>
-        <b>${escapeHtml(selectedProduct.name)}</b><br>
-        <span>ETB ${Number(selectedProduct.price).toLocaleString()}</span>
-      </div>
-    </div>`;
-
-  document.getElementById("orderForm").reset();
-  document.getElementById("quantity").value = 1;
-  clearPhoto();
-  openModal("orderModal");
+if(!selectedProduct){
+alert("Product not found.");
+return;
 }
 
-// ===== Student photo (camera or gallery, compressed) =====
-let studentPhotoFile = null;
+if(isSoldOut(selectedProduct)){
+alert("Sorry, this product is sold out.");
+return;
+}
+
+if(!currentUser){
+pendingOrderProductId=id;
+openAuth("login",
+"Please log in or create an account to place an order. You can then follow all your orders in 'My Orders'.");
+return;
+}
+
+document.getElementById("selectedProduct").textContent=
+selectedProduct.name+" — ETB "+
+Number(selectedProduct.price).toLocaleString();
+
+document.getElementById("selectedProductPreview").innerHTML=`
+<div style="display:flex;gap:12px;align-items:center;background:#f7f9fc;padding:10px;border-radius:12px">
+<img src="${escapeHtml((Array.isArray(selectedProduct.image_urls)&&selectedProduct.image_urls[0])||selectedProduct.image_url||PLACEHOLDER)}"
+alt="${escapeHtml(selectedProduct.name)}"
+style="width:90px;height:90px;object-fit:cover;border-radius:10px">
+
+<div>
+<b>${escapeHtml(selectedProduct.name)}</b><br>
+<span>ETB ${Number(selectedProduct.price).toLocaleString()}</span>
+</div>
+</div>`;
+
+document.getElementById("orderForm").reset();
+document.getElementById("quantity").value=1;
+
+const meta=(currentUser&&currentUser.user_metadata)||{};
+
+document.getElementById("fullName").value=meta.full_name||"";
+document.getElementById("phone").value=meta.phone||"";
+document.getElementById("studentId").value=meta.student_id||"";
+
+clearPhoto();
+clearPaymentProof();
+
+openModal("orderModal");
+}
+
+let studentPhotoFile=null;
 
 function setPhoto(input){
-  const file = input.files[0];
-  if(!file) return;
-  studentPhotoFile = file;
-  input.value = "";
-  const url = URL.createObjectURL(file);
-  document.getElementById("photoPreview").innerHTML = `
-    <div style="display:flex;gap:10px;align-items:center">
-      <img src="${url}" alt="Student photo"
-           style="width:80px;height:80px;object-fit:cover;border-radius:10px">
-      <button type="button" class="close" style="float:none" onclick="clearPhoto()">Remove</button>
-    </div>`;
+const file=input.files[0];
+if(!file)return;
+
+studentPhotoFile=file;
+input.value="";
+
+const url=URL.createObjectURL(file);
+
+document.getElementById("photoPreview").innerHTML=`
+<div style="display:flex;gap:10px;align-items:center">
+<img src="${url}" alt="Student photo"
+style="width:80px;height:80px;object-fit:cover;border-radius:10px">
+
+<button type="button"
+class="close"
+style="float:none"
+onclick="clearPhoto()">
+Remove
+</button>
+</div>`;
 }
 
 function clearPhoto(){
-  studentPhotoFile = null;
-  document.getElementById("photoPreview").innerHTML = "";
+studentPhotoFile=null;
+document.getElementById("photoPreview").innerHTML="";
 }
 
-// ===== Submit order (no stock limit) =====
+let paymentProofFile=null;
+
+function setPaymentProof(input){
+const file=input.files[0];
+if(!file)return;
+
+paymentProofFile=file;
+input.value="";
+
+const url=URL.createObjectURL(file);
+
+document.getElementById("paymentProofPreview").innerHTML=`
+<div style="display:flex;gap:10px;align-items:center">
+<img src="${url}" alt="Payment screenshot"
+style="width:80px;height:80px;object-fit:cover;border-radius:10px">
+
+<button type="button"
+class="close"
+style="float:none"
+onclick="clearPaymentProof()">
+Remove
+</button>
+</div>`;
+}
+
+function clearPaymentProof(){
+paymentProofFile=null;
+document.getElementById("paymentProofPreview").innerHTML="";
+}
+
 async function submitOrder(e){
-  e.preventDefault();
+e.preventDefault();
 
-  if(!selectedProduct){ alert("Please select a product first."); return; }
-
-  const requiredFields = [
-    ["fullName", "Full Name"],
-    ["phone", "Phone Number"],
-    ["studentId", "Student ID"],
-    ["block", "Block Number"],
-    ["dorm", "Dorm Number"],
-    ["section", "Section"],
-    ["department", "Department"]
-  ];
-
-  for(const [id, label] of requiredFields){
-    const el = document.getElementById(id);
-    if(!el.value.trim()){
-      alert("❌ " + label + " can't be empty.");
-      el.focus();
-      return;
-    }
-  }
-
-  const phoneValue = document.getElementById("phone").value.replace(/\s/g, "");
-  if(!/^(09|07)\d{8}$/.test(phoneValue)){
-    alert("❌ Phone number must start with 09 or 07 and have 10 digits (e.g. 0912345678).");
-    document.getElementById("phone").focus();
-    return;
-  }
-
-  const qty = Number(document.getElementById("quantity").value);
-  if(!qty || qty < 1){ alert("Please enter a valid quantity."); return; }
-
-  const btn = document.getElementById("orderSubmitBtn");
-  btn.disabled = true;
-  btn.textContent = "Submitting Order...";
-
-  let photoPath = null;
-  const photoFile = studentPhotoFile;
-
-  if(photoFile){
-    const safeName = photoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const fileName = `student_${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
-
-    const { data: uploadData, error: uploadErr } =
-      await db.storage.from("student-photos").upload(fileName, photoFile, {
-        upsert: false,
-        contentType: photoFile.type
-      });
-
-    if(uploadErr){
-      alert("Student photo upload failed: " + uploadErr.message);
-      btn.disabled = false;
-      btn.textContent = "✅ Place Order";
-      return;
-    }
-
-    if(uploadData) photoPath = uploadData.path;
-  }
-
-  const newOrder = {
-    product_id: selectedProduct.id,
-    product_name: selectedProduct.name,
-    product_price: selectedProduct.price,
-    product_image_url: selectedProduct.image_url,
-    quantity: qty,
-    full_name: document.getElementById("fullName").value.trim(),
-    phone: phoneValue,
-    student_id: document.getElementById("studentId").value.trim(),
-    block_number: document.getElementById("block").value.trim(),
-    dorm_number: document.getElementById("dorm").value.trim(),
-    section: document.getElementById("section").value.trim(),
-    department: document.getElementById("department").value.trim(),
-    delivery_note: document.getElementById("note").value.trim(),
-    student_photo_url: photoPath,
-    status: "New Order"
-  };
-
-  const { error } = await db.from("orders").insert([newOrder]);
-
-  btn.disabled = false;
-  btn.textContent = "✅ Place Order";
-
-  if(error){
-    alert("❌ Order Failed: " + error.message);
-    return;
-  }
-
-  closeModal("orderModal");
-  document.getElementById("orderForm").reset();
-  clearPhoto();
-  const contactLine = (CONTACT_PHONE && !CONTACT_PHONE.includes("X")) ? "\nQuestions? Call " + CONTACT_PHONE : "";
-  alert("✅ ORDER PLACED SUCCESSFULLY!\n\nWe'll contact you soon." + contactLine);
+if(!selectedProduct){
+alert("Please select a product first.");
+return;
 }
 
-// ===== Admin: session, badge, sound =====
-function setBadge(n){
-  const el = document.getElementById("adminBadge");
-  if(n > 0){ el.textContent = n; el.style.display = "inline-block"; }
-  else { el.style.display = "none"; }
-  document.title = (n > 0 ? "(" + n + ") " : "") + "King Online Market";
+if(!currentUser){
+pendingOrderProductId=selectedProduct.id;
+closeModal("orderModal");
+openAuth("login","Please log in to place your order.");
+return;
 }
 
-async function refreshBadge(){
-  if(!adminSignedIn){ setBadge(0); return; }
-  const { count, error } = await db.from("orders")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "New Order");
-  if(!error) setBadge(count || 0);
+const requiredFields=[
+["fullName","Full Name"],
+["phone","Phone Number"],
+["studentId","Student ID"],
+["block","Block Number"],
+["dorm","Dorm Number"],
+["section","Section"],
+["department","Department"]
+];
+
+for(const [id,label] of requiredFields){
+const el=document.getElementById(id);
+
+if(!el.value.trim()){
+alert("❌ "+label+" can't be empty.");
+el.focus();
+return;
+}
 }
 
-function beep(){
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = "sine"; osc.frequency.value = 880; gain.gain.value = 0.15;
-    osc.start(); osc.stop(ctx.currentTime + 0.25);
-    setTimeout(() => ctx.close(), 500);
-    if(navigator.vibrate) navigator.vibrate(200);
-  }catch(e){}
+const phoneValue=document.getElementById("phone").value.replace(/\s/g,"");
+
+if(!/^(09|07)\d{8}$/.test(phoneValue)){
+alert("❌ Phone number must start with 09 or 07 and have 10 digits.");
+document.getElementById("phone").focus();
+return;
 }
 
-async function updateSessionUI(session){
-  if(!session){
-    adminSignedIn = false;
-    setBadge(0);
-    document.getElementById("adminModal").style.display = "none";
-    return;
-  }
-  const { data: roleRow } = await db.from("user_roles")
-    .select("role").eq("user_id", session.user.id).maybeSingle();
-  adminSignedIn = !!roleRow && roleRow.role === "admin";
-  refreshBadge();
+const qty=Number(document.getElementById("quantity").value);
+
+if(!qty||qty<1){
+alert("Please enter a valid quantity.");
+return;
 }
 
-async function openAdminPanel(){
-  if(adminSignedIn){
-    await renderAdmin();
-    openModal("adminModal");
-  } else {
-    openModal("loginModal");
-  }
+if(!paymentProofFile){
+alert("❌ Please upload your payment screenshot (deposit ETB "+DEPOSIT_AMOUNT+").");
+return;
 }
 
-async function loginAdmin(){
-  const email = document.getElementById("adminEmail").value.trim();
-  const password = document.getElementById("adminPassword").value;
+const btn=document.getElementById("orderSubmitBtn");
 
-  const { data, error } = await db.auth.signInWithPassword({ email, password });
-  if(error){
-    alert("❌ Login Failed: " + error.message);
-    return;
-  }
+btn.disabled=true;
+btn.textContent="Submitting Order...";
 
-  const { data: roleRow, error: roleError } = await db
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", data.user.id)
-    .maybeSingle();
+let paymentProofPath=null;
 
-  if(roleError){
-    await db.auth.signOut();
-    alert("❌ Could not read your role: " + roleError.message);
-    return;
-  }
+{
+const safeName=paymentProofFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
 
-  if(!roleRow || roleRow.role !== "admin"){
-    await db.auth.signOut();
-    alert("❌ This account is not an Admin account (no admin role found for user " + data.user.id + ").");
-    return;
-  }
+const fileName=
+`payment_${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
 
-  adminSignedIn = true;
-  closeModal("loginModal");
-  await renderAdmin();
-  openModal("adminModal");
+const {data:uploadData,error:uploadErr}=
+await db.storage.from("payment-proofs").upload(
+fileName,
+paymentProofFile,
+{
+upsert:false,
+contentType:paymentProofFile.type
+}
+);
+
+if(uploadErr){
+alert("Payment screenshot upload failed: "+uploadErr.message);
+btn.disabled=false;
+btn.textContent="✅ Place Order";
+return;
 }
 
-async function logoutAdmin(){
-  await db.auth.signOut();
-  adminSignedIn = false;
-  setBadge(0);
-  closeModal("adminModal");
-  alert("Logged out.");
+if(uploadData)paymentProofPath=uploadData.path;
 }
 
-// ===== Admin: orders (filter + search) =====
-function toIntlPhone(phone){
-  const d = String(phone || "").replace(/\D/g, "");
-  if(d.startsWith("251")) return "+" + d;
-  if(d.startsWith("0")) return "+251" + d.slice(1);
-  if(d.length === 9) return "+251" + d;
-  return "+" + d;
+let photoPath=null;
+const photoFile=studentPhotoFile;
+
+if(photoFile){
+const safeName=photoFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+
+const fileName=
+`student_${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
+
+const {data:uploadData,error:uploadErr}=
+await db.storage.from("student-photos").upload(
+fileName,
+photoFile,
+{
+upsert:false,
+contentType:photoFile.type
+}
+);
+
+if(uploadErr){
+alert("Student photo upload failed: "+uploadErr.message);
+btn.disabled=false;
+btn.textContent="✅ Place Order";
+return;
 }
 
-function orderMessage(o){
-  return "ትዕዛዙን ተቀብያለሁ፣ በፍጥነት አደርሳለሁ!";
+if(uploadData)photoPath=uploadData.path;
 }
 
-const signedCache = new Map();
-async function getSignedUrl(path){
-  const c = signedCache.get(path);
-  if(c && c.exp > Date.now()) return { url: c.url };
-  const { data, error } = await db.storage.from("student-photos").createSignedUrl(path, 600);
-  if(error || !data || !data.signedUrl) return { error: error ? error.message : "unknown error" };
-  signedCache.set(path, { url: data.signedUrl, exp: Date.now() + 540000 });
-  return { url: data.signedUrl };
-}
+const newOrder={
+user_id:currentUser.id,
+product_id:selectedProduct.id,
+product_name:selectedProduct.name,
+product_price:selectedProduct.price,
+product_image_url:selectedProduct.image_url,
+quantity:qty,
 
-async function buildOrderCard(o, productMap){
-  const product = productMap.get(String(o.product_id));
-  const pName = o.product_name || (product && product.name) || "Product";
-  const pPrice = Number(o.product_price ?? (product && product.price) ?? 0);
-  const pImage = o.product_image_url || (product && product.image_url) || PLACEHOLDER;
-  const total = pPrice * Number(o.quantity || 0);
-  let studentPhotoHtml = "";
+full_name:document.getElementById("fullName").value.trim(),
+phone:phoneValue,
+student_id:document.getElementById("studentId").value.trim(),
+block_number:document.getElementById("block").value.trim(),
+dorm_number:document.getElementById("dorm").value.trim(),
+section:document.getElementById("section").value.trim(),
+department:document.getElementById("department").value.trim(),
+delivery_note:document.getElementById("note").value.trim(),
 
-  if(o.student_photo_url){
-    const res = await getSignedUrl(o.student_photo_url);
-    if(res.url){
-      studentPhotoHtml = `
-        <div style="margin-top:10px">
-          <b>Student Photo:</b><br>
-          <img src="${res.url}" alt="Student"
-               style="width:120px;height:120px;object-fit:cover;border-radius:12px;margin-top:6px">
-        </div>`;
-    } else {
-      studentPhotoHtml = `<br><small>Student photo saved, but could not be opened: ${escapeHtml(res.error)}</small>`;
-    }
-  }
+student_photo_url:photoPath,
+payment_proof_url:paymentProofPath,
+payment_reference:document.getElementById("paymentRef").value.trim(),
 
-  return `
-    <div class="order-item">
-      <div style="display:flex;gap:12px;align-items:center;background:#f7f9fc;padding:10px;border-radius:12px">
-        <img src="${escapeHtml(pImage)}" alt="${escapeHtml(pName)}"
-             style="width:90px;height:90px;object-fit:cover;border-radius:10px">
-        <div>
-          <b>📦 ${escapeHtml(pName)}</b><br>
-          <span>Price: ETB ${pPrice.toLocaleString()}</span><br>
-          <span>Quantity: ${escapeHtml(o.quantity)}</span><br>
-          <span><b>Total: ETB ${total.toLocaleString()}</b></span>
-        </div>
-      </div>
-      <div style="margin-top:10px">
-        <b>Order ID:</b> ${escapeHtml(o.id)}<br>
-        <span class="status">Status: ${escapeHtml(o.status)}</span><br>
-        <small>Date: ${new Date(o.created_at).toLocaleString()}</small><br><br>
-        <small>
-          <b>Student:</b> ${escapeHtml(o.full_name)}<br>
-          <b>Phone:</b> <a href="tel:${escapeHtml(String(o.phone || '').replace(/\s/g, ''))}" style="color:#243b8f;font-weight:bold">${escapeHtml(o.phone)}</a><br>
-          <b>ID:</b> ${escapeHtml(o.student_id)}<br>
-          <b>Block:</b> ${escapeHtml(o.block_number)} • <b>Dorm:</b> ${escapeHtml(o.dorm_number)}<br>
-          <b>Department:</b> ${escapeHtml(o.department)} • <b>Section:</b> ${escapeHtml(o.section)}
-        </small>
-        ${o.delivery_note ? "<br><small><b>Note:</b> " + escapeHtml(o.delivery_note) + "</small>" : ""}
-        ${studentPhotoHtml}
-        <select onchange="changeStatus('${escapeHtml(o.id)}', this.value)"
-                style="margin-top:10px;width:100%;padding:9px">
-          ${STATUSES.map(s => `<option ${s===o.status ? "selected" : ""}>${s}</option>`).join("")}
-        </select>
-        <div style="margin-top:10px">
-          <a href="sms:${escapeHtml(toIntlPhone(o.phone))}?body=${encodeURIComponent(orderMessage(o))}"
-             style="display:block;text-align:center;text-decoration:none;padding:10px;border-radius:8px;background:#eef4ff;color:#243b8f;font-weight:bold">📩 Send SMS</a>
-        </div>
-        <button type="button" onclick="deleteOrder('${escapeHtml(o.id)}')"
-                style="margin-top:10px;width:100%;padding:10px;border:0;border-radius:8px;background:#fee4e2;color:#d92d20;font-weight:bold;cursor:pointer">🗑️ Delete order</button>
-      </div>
-    </div>`;
-}
-
-async function renderOrderList(){
-  const token = ++orderListToken;
-  const productMap = new Map(products.map(p => [String(p.id), p]));
-  const cards = await Promise.all(orders.map(o => buildOrderCard(o, productMap)));
-  if(token !== orderListToken) return;
-  document.getElementById("adminOrders").innerHTML = cards.join("") || "<p>No orders yet.</p>";
-}
-
-let orderListToken = 0;
-
-async function renderAdmin(){
-  const { data: fetchedOrders, error: err1 } = await db
-    .from("orders")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if(err1){
-    document.getElementById("adminOrders").innerHTML =
-      "<p>Could not load orders: " + escapeHtml(err1.message) + "</p>";
-    return;
-  }
-
-  orders = fetchedOrders || [];
-  refreshBadge();
-  renderOrderList();
-  renderAdminProducts();
-}
-
-async function changeStatus(id, newStatus){
-  const { error } = await db.from('orders').update({ status: newStatus }).eq('id', id);
-  if(error){ alert("Failed to update status: " + error.message); }
-  else { renderAdmin(); }
-}
-
-async function deleteOrder(id){
-  if(!confirm("Delete this order? This can't be undone.")) return;
-  const { error } = await db.from('orders').delete().eq('id', id);
-  if(error){ alert("Failed to delete order: " + error.message); return; }
-  renderAdmin();
-}
-
-// ===== Admin: products =====
-function renderAdminProducts(){
-  document.getElementById("adminProducts").innerHTML = products.map(p => {
-    const sold = isSoldOut(p);
-    return `
-    <div class="order-item" style="display:flex;gap:12px;align-items:center">
-      <img src="${escapeHtml(p.image_url || PLACEHOLDER)}"
-           alt="${escapeHtml(p.name)}"
-           style="width:70px;height:70px;object-fit:cover;border-radius:9px">
-      <div style="flex:1"><b>${escapeHtml(p.name)}</b><br>
-      ETB ${Number(p.price).toLocaleString()} •
-      <span style="font-weight:bold;color:${sold ? '#d92d20' : '#079455'}">${sold ? 'Sold out' : 'Available'}</span>
-      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-        <button type="button" class="mini" onclick="toggleProduct(${p.id})" style="background:${sold ? '#dcfae6' : '#fef0c7'};color:${sold ? '#067647' : '#93370d'}">${sold ? '✅ Mark available' : '⛔ Mark sold out'}</button>
-        <button type="button" class="mini" onclick="editProduct(${p.id})" style="background:#eef4ff;color:#243b8f">✏️ Edit</button>
-        <button type="button" class="mini" onclick="deleteProduct(${p.id})" style="background:#fee4e2;color:#d92d20">🗑️ Delete</button>
-      </div></div>
-    </div>`;
-  }).join("") || "<p>No products yet.</p>";
-}
-
-async function toggleProduct(id){
-  const p = products.find(x => x.id === id);
-  if(!p) return;
-  const newStock = isSoldOut(p) ? 1 : 0;
-  const { error } = await db.from('products').update({ stock: newStock }).eq('id', id);
-  if(error){ alert("Failed to update product: " + error.message); return; }
-  await fetchProducts();
-  renderAdminProducts();
-}
-
-async function editProduct(id){
-  const p = products.find(x => x.id === id);
-  if(!p) return;
-  const name = prompt("Product name:", p.name);
-  if(name === null) return;
-  const priceInput = prompt("Price (ETB):", p.price);
-  if(priceInput === null) return;
-  const price = Number(priceInput);
-  if(!name.trim() || isNaN(price) || price < 0){ alert("❌ Enter a valid name and price."); return; }
-
-  const { error } = await db.from('products').update({ name: name.trim(), price }).eq('id', id);
-  if(error){ alert("Failed to update product: " + error.message); return; }
-  await fetchProducts();
-  renderAdmin();
-}
-
-async function deleteProduct(id){
-  const p = products.find(x => x.id === id);
-  if(!confirm("Delete \"" + (p ? p.name : "this product") + "\"? This can't be undone.")) return;
-  const { error } = await db.from('products').delete().eq('id', id);
-  if(error){ alert("Failed to delete product: " + error.message); return; }
-  await fetchProducts();
-  renderAdmin();
-}
-
-async function addProduct(e){
-  e.preventDefault();
-  const file = document.getElementById("pImage").files[0];
-  if(!file){ alert("Please select a product image."); return; }
-
-  const btn = document.getElementById("pAddBtn");
-  btn.disabled = true; btn.textContent = "Uploading & Adding...";
-
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const fileName = `product_${Date.now()}_${safeName}`;
-  const { error: uploadErr } = await db.storage.from('product-images').upload(fileName, file);
-
-  if(uploadErr){
-    alert("Image Upload Failed: " + uploadErr.message);
-    btn.disabled = false; btn.textContent = "➕ Add Product";
-    return;
-  }
-
-  const { data: urlData } = db.storage.from('product-images').getPublicUrl(fileName);
-
-  const newProd = {
-    name: document.getElementById("pName").value.trim(),
-    price: Number(document.getElementById("pPrice").value),
-    category: document.getElementById("pCategory").value,
-    stock: 1,
-    description: document.getElementById("pDescription").value.trim(),
-    image_url: urlData.publicUrl
-  };
-
-  const { error } = await db.from('products').insert([newProd]);
-
-  btn.disabled = false; btn.textContent = "➕ Add Product";
-
-  if(error){
-    alert("Failed to add product: " + error.message);
-  } else {
-    e.target.reset();
-    await fetchProducts();
-    renderAdmin();
-    alert("✅ Product added successfully!");
-  }
-}
-
-// ===== Real-time listener =====
-db.channel('schema-db-changes')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
-    fetchProducts();
-  })
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-    if(!adminSignedIn) return;
-    if(payload.eventType === 'INSERT') beep();
-    refreshBadge();
-    if(document.getElementById("adminModal").style.display === "block"){
-      renderAdmin();
-    }
-  })
-  .subscribe();
-
-// Restore current login session
-db.auth.getSession().then(({ data }) => updateSessionUI(data.session));
-db.auth.onAuthStateChange((_event, session) => {
-  setTimeout(() => updateSessionUI(session), 0);
-});
-
-// Initial load
-renderContact();
-fetchProducts();
-</script>
-</body>
-</html>
+deposit_amount:DEPOSIT_AMOUNT,
+payment_status:"Pending",
+status:"New Order"
+};
