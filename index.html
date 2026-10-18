@@ -1,1252 +1,1196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>King Online Market</title>
+<!-- Supabase JS Library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#172033;padding-bottom:75px}
-header{background:#243b8f;color:#fff;padding:18px 16px}.top{max-width:900px;margin:auto}
-h1{font-size:23px;margin:0 0 5px}.tagline{font-size:13px;opacity:.9}
-.search{margin-top:14px;width:100%;padding:13px;border:0;border-radius:10px;font-size:16px}
-main{max-width:900px;margin:auto;padding:18px 14px}.hero,.modal-box{background:#fff;border-radius:16px;padding:20px;box-shadow:0 3px 12px #0001}
-.hero{margin-bottom:18px}.hero h2{margin-top:0}.hero p{color:#667085;line-height:1.5}
-.section-title{font-size:19px;margin:20px 0 12px}.categories{display:flex;gap:9px;overflow:auto}
-.cat{border:0;background:#fff;padding:11px 14px;border-radius:10px;white-space:nowrap;cursor:pointer}.cat.active{background:#243b8f;color:#fff}
-.products{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px #0001}
-.card img{width:100%;height:150px;object-fit:cover}.card-body{padding:12px}.price{font-weight:bold;color:#243b8f;margin:7px 0}
-.buy,.submit{width:100%;border:0;border-radius:9px;padding:12px;background:#243b8f;color:#fff;font-weight:bold;font-size:15px;cursor:pointer}
-.buy.soldout{background:#98a2b3}.top-actions{display:none!important}
-.bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:100;background:#fff;border-top:1px solid #e4e7ec;display:grid;grid-template-columns:repeat(4,1fr);box-shadow:0 -3px 14px #0001;padding:7px 4px calc(7px + env(safe-area-inset-bottom))}
-.bottom-nav button{border:0;background:transparent;color:#475467;font-size:11px;font-weight:bold;padding:7px 2px;cursor:pointer}
-.bottom-nav button span{display:block;font-size:19px;line-height:20px;margin-bottom:2px}
-.gallery{display:flex;gap:8px;overflow:auto;margin-top:8px}.gallery img{width:72px;height:72px;object-fit:cover;border-radius:9px;flex:0 0 auto}
-.modal{display:none;position:fixed;inset:0;background:#0008;z-index:200;padding:15px;overflow:auto}.modal-box{max-width:560px;margin:20px auto}
-.close{float:right;border:0;background:#eee;border-radius:8px;padding:8px 11px;cursor:pointer}
+/* ===== 1. BASE ===== */
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#172033}
+h1{font-size:23px;margin:0 0 5px}
 label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}
 input,textarea,select{width:100%;padding:12px;border:1px solid #ccd1da;border-radius:9px;font-size:15px}
-textarea{min-height:80px}.submit{background:#079455;margin-top:16px}
+textarea{min-height:80px}
+
+/* ===== 2. HEADER + SEARCH ===== */
+header{background:#243b8f;color:#fff;padding:18px 16px}
+.top{max-width:900px;margin:auto}
+.tagline{font-size:13px;opacity:.9}
+.search{margin-top:14px;width:100%;padding:13px;border:0;border-radius:10px;font-size:16px}
+
+/* ===== 3. PAGE LAYOUT + CARDS ===== */
+main{max-width:900px;margin:auto;padding:18px 14px 90px}
+.hero,.modal-box{background:#fff;border-radius:16px;padding:20px;box-shadow:0 3px 12px #0001}
+.hero{margin-bottom:18px}
+.hero h2{margin-top:0}
+.hero p{color:#667085;line-height:1.5}
+.section-title{font-size:19px;margin:20px 0 12px}
 .notice{background:#eef4ff;color:#243b8f;padding:12px;border-radius:10px;margin-top:12px;line-height:1.5;font-size:13px}
-.order-item{background:#fff;border:1px solid #e0e4ec;border-radius:12px;padding:13px;margin-top:10px}.status{color:#243b8f;font-weight:bold}
+
+/* ===== 4. CATEGORIES + PRODUCT GRID ===== */
+.categories{display:flex;gap:9px;overflow:auto}
+.cat{border:0;background:#fff;padding:11px 14px;border-radius:10px;white-space:nowrap;cursor:pointer}
+.cat.active{background:#243b8f;color:#fff}
+.products{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px #0001}
+.card img{width:100%;height:150px;object-fit:cover}
+.card-body{padding:12px}
+.price{font-weight:bold;color:#243b8f;margin:7px 0}
+.card.soldout img{filter:grayscale(1);opacity:.6}
+
+/* ===== 5. BUTTONS ===== */
+.buy,.submit{width:100%;border:0;border-radius:9px;padding:12px;background:#243b8f;color:#fff;font-weight:bold;font-size:15px;cursor:pointer}
+.submit{background:#079455;margin-top:16px}
+.buy.soldout{background:#98a2b3;cursor:not-allowed}
+.admin-btn{margin-top:12px;background:#fff;color:#243b8f;border:0;border-radius:9px;padding:10px 14px;font-weight:bold;cursor:pointer}
 .mini{padding:8px;border:0;border-radius:8px;font-weight:bold;cursor:pointer;font-size:13px}
+.close{float:right;border:0;background:#eee;border-radius:8px;padding:8px 11px;cursor:pointer}
+.badge{display:none;background:#d92d20;color:#fff;border-radius:10px;padding:2px 8px;font-size:12px;margin-left:4px}
+
+/* ===== 6. POP-UP WINDOWS (modals) ===== */
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:50;padding:15px;overflow:auto}
+.modal-box{max-width:560px;margin:20px auto}
+
+/* ===== 7. ORDERS + ADMIN ===== */
+.order-item{background:#fff;border:1px solid #e0e4ec;border-radius:12px;padding:13px;margin-top:10px}
+.status{color:#243b8f;font-weight:bold}
+.image-preview-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.image-preview-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid #e0e4ec}
+
+/* ===== 8. BOTTOM NAVIGATION ===== */
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:1px solid #e0e4ec;display:grid;grid-template-columns:repeat(3,1fr);box-shadow:0 -3px 12px #0001;padding-bottom:env(safe-area-inset-bottom)}
+.bottom-nav button{border:0;background:#fff;padding:10px 4px 9px;font-size:11px;font-weight:bold;color:#475467;cursor:pointer}
+.bottom-nav button span{display:block;font-size:19px;margin-bottom:2px}
+
+/* ===== 9. BIG SCREENS ===== */
 @media(min-width:700px){.products{grid-template-columns:repeat(4,1fr)}.card img{height:180px}}
+
+/* ===== 10. LOGIN GATE (shown before login) ===== */
+body.loggedout{background:#243b8f}
+body.loggedout header,body.loggedout main,body.loggedout .bottom-nav{display:none}
+#authModal{background:linear-gradient(160deg,#243b8f,#16245f)}
+.gate-brand{text-align:center;color:#fff;margin:34px auto 6px;max-width:560px}
+.gate-brand h1{font-size:28px;margin:0 0 6px}
+.gate-brand div{font-size:14px;opacity:.9}
 </style>
 </head>
+<body class="loggedout">
+<!-- ===== HEADER (title + search) ===== -->
+<header><div class="top">
+<h1>King Online Market</h1><div class="tagline">Buy • Order • Get Delivered on Campus</div>
+<input id="search" class="search" placeholder="Search products...">
+</div></header>
 
-<body>
-
-<header>
-<div class="top">
-<h1>King Online Market</h1>
-<div class="tagline">Buy • Order • Get Delivered on Campus</div>
-<input class="search" id="search" placeholder="Search products...">
-<div class="top-actions"></div>
-</div>
-</header>
-
-<main>
-<section class="hero">
-<h2>Welcome to King Online Market 🛍️</h2>
-<p>Choose a product and place your campus delivery order.</p>
-<div class="notice" id="contactBox" style="display:none"></div>
-</section>
-
-<h2 class="section-title">Categories</h2>
-<div class="categories" id="categories"></div>
-
-<h2 class="section-title">Products</h2>
-<div class="products" id="products">Loading products...</div>
-</main>
-
-<nav class="bottom-nav">
-<button type="button" onclick="scrollToProducts()"><span>🛍️</span>Products</button>
-<button type="button" onclick="openMyOrdersNav()"><span>📦</span>My Orders</button>
-<button type="button" onclick="openSignInNav()"><span>👤</span>Sign in</button>
-<button type="button" onclick="openAdminPanel()"><span>🔒</span>Admin Login</button>
+<!-- ===== BOTTOM MENU (Admin button is hidden unless you are admin) ===== -->
+<nav class="bottom-nav" aria-label="Main navigation">
+  <button type="button" onclick="scrollToProducts()"><span>🛍️</span>Products</button>
+  <button type="button" onclick="openMyOrders()"><span>📦</span>My Orders</button>
+  <button type="button" onclick="logoutStudent()"><span>🚪</span>Logout</button>
+  <button type="button" id="adminNavBtn" style="display:none" onclick="openAdminPanel()"><span>🔒</span>Admin <b id="adminBadge" class="badge"></b></button>
 </nav>
 
-<div class="modal" id="orderModal">
-<div class="modal-box">
+<!-- ===== MAIN PAGE (welcome, categories, products) ===== -->
+<main>
+<section class="hero"><h2>Welcome to King Online Market 🛍️</h2><p>Choose a product and place your campus delivery order.</p>
+<div id="authArea" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+<div id="contactBox" class="notice" style="display:none"></div></section>
+<h2 class="section-title">Categories</h2><div id="categories" class="categories"></div>
+<h2 id="productsSection" class="section-title">Products</h2><div id="products" class="products">Loading products...</div>
+</main>
+
+<!-- ===== POP-UP: PLACE ORDER FORM ===== -->
+<div id="orderModal" class="modal"><div class="modal-box">
 <button class="close" onclick="closeModal('orderModal')">✕</button>
 <h2>📦 Place Your Order</h2>
-<div id="selectedProductPreview"></div>
+<div id="selectedProductPreview" style="margin-bottom:12px"></div>
 <p id="selectedProduct" style="font-weight:bold"></p>
-
-<form id="orderForm" onsubmit="submitOrder(event)">
-<label>Full Name *</label>
-<input id="fullName" required>
-
-<label>Phone Number *</label>
-<input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="09xxxxxxxx or 07xxxxxxxx" required>
-
-<label>Student ID Number *</label>
-<input id="studentId" required>
-
-<label>Block Number *</label>
-<input id="block" required>
-
-<label>Dorm Number *</label>
-<input id="dorm" required>
-
-<label>Section *</label>
-<input id="section" required>
-
-<label>Department *</label>
-<input id="department" required>
-
-<label>Quantity *</label>
-<input id="quantity" type="number" min="1" value="1" required>
+<form id="orderForm" onsubmit="submitOrder(event)" novalidate>
+<label>Full Name *</label><input id="fullName" required>
+<label>Phone Number *</label><input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="09xxxxxxxx or 07xxxxxxxx" required>
+<label>Student ID Number *</label><input id="studentId" required>
+<label>Block Number *</label><input id="block" required>
+<label>Dorm Number *</label><input id="dorm" required>
+<label>Section *</label><input id="section" required>
+<label>Department *</label><input id="department" required>
+<label>Quantity *</label><input id="quantity" type="number" min="1" value="1" required>
 
 <div class="notice">
-💰 <b>ቅድመ ክፍያ (Deposit)</b><br>
-ብር <span id="depositAmount"></span> ይላኩ፦
+💰 <b>ቅድመ ክፍያ (Deposit) ያስፈልጋል</b><br>
+ብር <span id="depositAmount"></span> ከታች ካሉት አንዱ ላይ ይላኩ፦<br>
 <div id="depositAccounts" style="margin:6px 0"></div>
 የሂሳብ ባለቤት፦ <b><span id="depositName"></span></b><br>
-ከዚያ የክፍያ screenshot ይጫኑ።
+ከዚያ የክፍያ screenshot ከታች ይጫኑ። ያለ ማረጋገጫ ትዕዛዙ አይስተናገድም።
 </div>
-
 <label>Payment Screenshot *</label>
-<button type="button" class="close" onclick="document.getElementById('paymentProofInput').click()" style="float:none;width:100%;padding:12px">🧾 Upload payment screenshot</button>
+<button type="button" class="close" style="float:none;width:100%;padding:12px" onclick="document.getElementById('paymentProofInput').click()">🧾 Upload payment screenshot</button>
 <input id="paymentProofInput" type="file" accept="image/*" hidden onchange="setPaymentProof(this)">
-<div id="paymentProofPreview"></div>
-
+<div id="paymentProofPreview" style="margin-top:10px"></div>
 <label>Transaction Reference (optional)</label>
 <input id="paymentRef" placeholder="e.g. Telebirr confirmation code">
 
 <label>Student Photo (optional)</label>
 <div style="display:flex;gap:8px">
-<button type="button" class="close" onclick="document.getElementById('photoCamera').click()" style="float:none;flex:1">📷 Take photo</button>
-<button type="button" class="close" onclick="document.getElementById('photoGallery').click()" style="float:none;flex:1">🖼️ Gallery</button>
+<button type="button" class="close" style="float:none;flex:1;padding:12px" onclick="document.getElementById('photoCamera').click()">📷 Take photo</button>
+<button type="button" class="close" style="float:none;flex:1;padding:12px" onclick="document.getElementById('photoGallery').click()">🖼️ Choose from gallery</button>
 </div>
 <input id="photoCamera" type="file" accept="image/*" capture="user" hidden onchange="setPhoto(this)">
 <input id="photoGallery" type="file" accept="image/*" hidden onchange="setPhoto(this)">
-<div id="photoPreview"></div>
+<div id="photoPreview" style="margin-top:10px"></div>
+<label>Delivery Note</label><textarea id="note" placeholder="Example: Please call me when you arrive."></textarea>
+<button class="submit" type="submit" id="orderSubmitBtn">✅ Place Order</button>
+</form></div></div>
 
-<label>Delivery Note</label>
-<textarea id="note" placeholder="Example: Please call me when you arrive."></textarea>
-
-<button class="submit" id="orderSubmitBtn" type="submit">✅ Place Order</button>
-</form>
-</div>
-</div>
-
-<div class="modal" id="authModal">
-<div class="modal-box">
-<button class="close" onclick="closeModal('authModal')">✕</button>
+<!-- ===== POP-UP: LOGIN / SIGN UP (the first screen people see) ===== -->
+<div id="authModal" class="modal"><div class="gate-brand"><h1>👑 King Online Market</h1><div>Buy • Order • Get Delivered on Campus</div></div><div class="modal-box">
 <h2 id="authTitle">👤 Login</h2>
-<div class="notice" id="authNotice" style="display:none"></div>
-
+<div id="authNotice" class="notice" style="display:none"></div>
+<div style="background:#fffaeb;color:#93370d;border:1px solid #fedf89;border-radius:10px;padding:8px 10px;margin-top:10px;font-size:12px;line-height:1.5">⚠️ <b>Password አይርሱ!</b> ለእያንዳንዱ መግቢያ ያስፈልጋል። ይጻፉት ወይም በአእምሮዎ ይያዙት። ከረሱ ወደ 0993758814 ይደውሉ።</div>
 <div id="signupFields" style="display:none">
-<label>Full Name *</label><input id="suName">
-<label>Phone Number *</label><input id="suPhone" type="tel" inputmode="numeric" maxlength="10">
+<label>Full Name *</label><input id="suName" autocomplete="name">
 <label>Student ID Number *</label><input id="suStudentId">
 </div>
-
-<label>Email *</label><input id="authEmail" type="email">
-<label>Password *</label><input id="authPassword" type="password">
-
+<label>Phone Number * (ስልክ ቁጥር)</label><input id="authEmail" type="text" autocomplete="username" placeholder="09xxxxxxxx or 07xxxxxxxx">
+<label>Password *</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters">
 <button class="submit" id="authSubmitBtn" onclick="submitAuth()">Login</button>
-<p style="text-align:center">
-<a href="javascript:void(0)" id="authToggle" onclick="toggleAuthMode()" style="color:#243b8f;font-weight:bold"></a>
-</p>
-</div>
-</div>
+<p style="text-align:center;margin:14px 0 0;font-size:14px"><a href="javascript:void(0)" id="authToggle" onclick="toggleAuthMode()" style="color:#243b8f;font-weight:bold"></a></p>
+</div></div>
 
-<div class="modal" id="myOrdersModal">
-<div class="modal-box">
+<!-- ===== POP-UP: MY ORDERS ===== -->
+<div id="myOrdersModal" class="modal"><div class="modal-box">
 <button class="close" onclick="closeModal('myOrdersModal')">✕</button>
 <h2>📦 My Orders</h2>
 <div id="myOrdersList">Loading...</div>
-</div>
-</div>
+</div></div>
 
-<div class="modal" id="detailModal">
-<div class="modal-box">
+<!-- ===== POP-UP: PRODUCT DETAILS ===== -->
+<div id="detailModal" class="modal"><div class="modal-box">
 <button class="close" onclick="closeModal('detailModal')">✕</button>
 <div id="detailContent"></div>
-</div>
-</div>
+</div></div>
 
-<div class="modal" id="loginModal">
-<div class="modal-box">
-<button class="close" onclick="closeModal('loginModal')">✕</button>
-<h2>🔒 Admin Login</h2>
-<label>Email</label><input id="adminEmail" type="email">
-<label>Password</label><input id="adminPassword" type="password">
-<button class="submit" onclick="loginAdmin()">Login</button>
-</div>
-</div>
-
-<div class="modal" id="adminModal">
-<div class="modal-box">
-<button class="close" onclick="closeModal('adminModal')">✕</button>
-<h2>🧑‍💼 Admin Dashboard</h2>
-
-<button onclick="logoutAdmin()" style="background:#d92d20;color:#fff;border:0;padding:8px 12px;border-radius:6px;float:right">Logout</button>
-
+<!-- ===== POP-UP: ADMIN DASHBOARD ===== -->
+<div id="adminModal" class="modal"><div class="modal-box">
+<button class="close" onclick="closeModal('adminModal')">✕</button><h2>🧑‍💼 Admin Dashboard</h2>
+<button onclick="logoutAdmin()" style="background:#d92d20;color:#fff;border:0;padding:8px 12px;border-radius:6px;float:right;cursor:pointer">Logout</button>
 <h3>Orders</h3>
 <div id="adminOrders">Loading orders...</div>
-
-<h3>💰 Deposit Settings</h3>
-<div class="notice">Set the required prepayment amount.</div>
-<label>Deposit Amount (ETB)</label>
-<input id="adminDepositAmount" type="number" min="0" step="1">
-<button class="submit" onclick="saveDepositAmount()">💾 Save Deposit Amount</button>
-
-<h3>Add Product</h3>
+<h3 style="margin-top:25px">Add Product</h3>
 <form id="productForm" onsubmit="addProduct(event)">
-<label>Product Name *</label>
-<input id="pName" required>
-
-<label>Price (ETB) *</label>
-<input id="pPrice" type="number" min="0" required>
-
-<label>Category</label>
-<select id="pCategory">
-<option>Electronics</option>
-<option>Clothes</option>
-<option>Shoes</option>
-<option>Bags</option>
-<option>Books</option>
-<option>Personal Care</option>
-<option>Food & Snacks</option>
-<option>Other</option>
-</select>
-
-<label>Product Images * (1–5)</label>
-<input id="pImage" type="file" accept="image/*" multiple required>
-<small>Choose 1 to 5 images. The first is the main image.</small>
-<div class="gallery" id="pImagePreview"></div>
-
-<label>Description</label>
-<textarea id="pDescription"></textarea>
-
-<label>Specifications</label>
-<textarea id="pSpecs" placeholder="RAM: 8GB&#10;Storage: 128GB&#10;Color: Black"></textarea>
-
-<button class="submit" id="pAddBtn" type="submit">➕ Add Product</button>
+<label>Product Name *</label><input id="pName" required>
+<label>Price (ETB) *</label><input id="pPrice" type="number" min="0" required>
+<label>Category</label><select id="pCategory"><option>Electronics</option><option>Clothes</option><option>Shoes</option><option>Bags</option><option>Books</option><option>Personal Care</option><option>Food & Snacks</option><option>Other</option></select>
+<label>Product Images * (1–5 images)</label>
+<input id="pImage" type="file" accept="image/*" multiple required onchange="previewProductImages(this)">
+<div id="productImagePreview" class="image-preview-grid"></div>
+<small style="color:#667085">You can select up to 5 images. The first image will be the main product image.</small>
+<label>Description</label><textarea id="pDescription" placeholder="Short description shown in product details."></textarea>
+<label>Specifications (optional)</label>
+<textarea id="pSpecs" placeholder="One per line, e.g.
+RAM: 8GB
+Storage: 128GB
+Color: Black"></textarea>
+<button class="submit" type="submit" id="pAddBtn">➕ Add Product</button>
 </form>
-
-<h3>Products</h3>
-<div id="adminProducts"></div>
+<h3 style="margin-top:25px">💰 Prepayment / Deposit Settings</h3>
+<div class="notice">Current deposit: <b>ETB <span id="adminDepositAmount">...</span></b><br><small>Change the amount here. The new amount will appear automatically on the student order form.</small></div>
+<div style="display:flex;gap:8px;align-items:end">
+  <div style="flex:1"><label>Deposit Amount (ETB)</label><input id="adminDepositInput" type="number" min="0" step="1" placeholder="50"></div>
+  <button type="button" class="submit" style="width:auto;padding:12px 16px;margin-top:0" onclick="saveDepositAmount()">💾 Save</button>
 </div>
-</div>
+<h3 style="margin-top:25px">Products</h3>
+<div id="adminProducts" style="margin-top:15px"></div>
+</div></div>
 
+<!-- ===== SCRIPT (all the app logic, in numbered sections) ===== -->
 <script>
-const SUPABASE_URL="https://qdtgjhddpdfntcyxxlwz.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_Ir3qLO57DWf3Kgstrt-Ueg_yaENtyTh";
-const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+// ======================================================================
+// 1. SETTINGS  (edit your phone, bank accounts, etc. here)
+// ======================================================================
 
-let products=[];
-let orders=[];
-let selectedProduct=null;
-let selectedCategory="All";
-let currentUser=null;
-let adminSignedIn=false;
-let authMode="login";
-let pendingOrderProductId=null;
-let studentPhotoFile=null;
-let paymentProofFile=null;
-let DEPOSIT_AMOUNT=50;
+// Supabase Configuration
+const SUPABASE_URL = 'https://qdtgjhddpdfntcyxxlwz.supabase.co';
 
-const PLACEHOLDER="https://via.placeholder.com/150";
-const CONTACT_PHONE="0993758814";
-const ACCOUNT_NAME="Negesse Azmeraw";
+const SUPABASE_ANON_KEY = 'sb_publishable_Ir3qLO57DWf3Kgstrt-Ueg_yaENtyTh';
 
-const PAYMENT_OPTIONS=[
-{provider:"CBE",account:"1000475329997"},
-{provider:"BOA",account:"39928388"},
-{provider:"Telebirr",account:"0932160991"}
+const CONTACT_PHONE = "0993758814";      // your phone number
+
+const TELEGRAM_USERNAME = "";            // e.g. "kingmarket" (without @), leave empty to hide
+
+const ACCOUNT_NAME = "Negesse Azmeraw";  // account holder name (same for all)
+
+const PAYMENT_OPTIONS = [
+  { provider: "CBE",      account: "1000475329997" },
+  { provider: "BOA",      account: "39928388" },
+  { provider: "Telebirr", account: "0932160991" }
 ];
 
-const STATUSES=[
-"New Order",
-"Confirmed",
-"Collecting Product",
-"Product Received",
-"Out for Delivery",
-"Delivered",
-"Cancelled"
-];
+const STATUSES = ["New Order","Confirmed","Collecting Product","Product Received","Out for Delivery","Delivered","Cancelled"];
 
-const FLOW=[
-"New Order",
-"Confirmed",
-"Collecting Product",
-"Product Received",
-"Out for Delivery",
-"Delivered"
-];
+const FLOW = ["New Order","Confirmed","Collecting Product","Product Received","Out for Delivery","Delivered"];
 
-function escapeHtml(v){
-return String(v??"").replace(/[&<>"']/g,c=>({
-"&":"&amp;",
-"<":"&lt;",
-">":"&gt;",
-'"':"&quot;",
-"'":"&#039;"
-}[c]));
+const PLACEHOLDER = "https://via.placeholder.com/150";
+
+// ======================================================================
+// 2. SUPABASE CLIENT
+// ======================================================================
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ======================================================================
+// 3. APP STATE (shared variables)
+// ======================================================================
+
+let products = [], orders = [];
+
+let selectedProduct = null, selectedCategory = "All";
+
+let adminSignedIn = false;
+
+let DEPOSIT_AMOUNT = 50;                  // required deposit in ETB; loaded from Supabase
+
+let studentPhotoFile = null;
+
+let paymentProofFile = null;
+
+let currentUser = null;
+
+let authMode = "login";
+
+let pendingOrderProductId = null;
+
+const signedCache = new Map();
+
+let orderListToken = 0;
+
+// ======================================================================
+// 4. SMALL HELPERS
+// ======================================================================
+
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>"']/g, function(ch){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch];
+  });
 }
 
-function shortId(id){
-return String(id??"").replace(/-/g,"").slice(0,8).toUpperCase();
-}
+function shortId(id){ return String(id ?? "").replace(/-/g, "").slice(0, 8).toUpperCase(); }
 
-function openModal(id){
-const e=document.getElementById(id);
-if(e)e.style.display="block";
-}
+function openModal(id){document.getElementById(id).style.display="block"}
 
-function closeModal(id){
-const e=document.getElementById(id);
-if(e)e.style.display="none";
-}
+function closeModal(id){document.getElementById(id).style.display="none"}
 
-function renderContact(){
-const box=document.getElementById("contactBox");
-if(!CONTACT_PHONE)return;
-box.innerHTML="<b>Need help with your order?</b><br>📞 <a href='tel:"+CONTACT_PHONE+"'>"+CONTACT_PHONE+"</a>";
-box.style.display="block";
-}
-
-function renderDepositInfo(){
-document.getElementById("depositAmount").textContent=Number(DEPOSIT_AMOUNT).toLocaleString();
-document.getElementById("depositName").textContent=ACCOUNT_NAME;
-document.getElementById("depositAccounts").innerHTML=PAYMENT_OPTIONS.map(x=>
-"<b>"+escapeHtml(x.provider)+":</b> "+escapeHtml(x.account)
-).join("<br>");
-}
-
-async function loadDepositSetting(){
-try{
-const {data,error}=await db.from("site_settings")
-.select("id,deposit_amount")
-.order("id",{ascending:true})
-.limit(1)
-.maybeSingle();
-
-if(!error&&data)DEPOSIT_AMOUNT=Number(data.deposit_amount)||0;
-}catch(e){}
-renderDepositInfo();
-const input=document.getElementById("adminDepositAmount");
-if(input)input.value=DEPOSIT_AMOUNT;
-}
-
-async function saveDepositAmount(){
-const amount=Number(document.getElementById("adminDepositAmount").value);
-if(!Number.isFinite(amount)||amount<0){
-alert("Enter a valid deposit amount.");
-return;
-}
-
-const {data:existing,error:readError}=await db.from("site_settings")
-.select("id").order("id",{ascending:true}).limit(1).maybeSingle();
-
-if(readError){
-alert("Failed to read deposit setting: "+readError.message);
-return;
-}
-
-let error=null;
-
-if(existing){
-({error}=await db.from("site_settings")
-.update({deposit_amount:amount,updated_at:new Date().toISOString()})
-.eq("id",existing.id));
-}else{
-({error}=await db.from("site_settings")
-.insert([{deposit_amount:amount}]));
-}
-
-if(error){
-alert("Failed to save deposit amount: "+error.message);
-return;
-}
-
-DEPOSIT_AMOUNT=amount;
-renderDepositInfo();
-alert("Deposit amount updated.");
-}
-
-async function fetchProducts(){
-const {data,error}=await db.from("products")
-.select("*")
-.order("created_at",{ascending:false});
-
-if(error){
-console.error(error);
-document.getElementById("products").innerHTML=
-"<div class='order-item'>Unable to load products.</div>";
-return;
-}
-
-products=data||[];
-render();
-}
-
-function productImages(p){
-if(Array.isArray(p.image_urls)&&p.image_urls.length)return p.image_urls;
-if(typeof p.image_urls==="string"){
-try{
-const x=JSON.parse(p.image_urls);
-if(Array.isArray(x)&&x.length)return x;
-}catch(e){}
-}
-return p.image_url?[p.image_url]:[];
-}
-
-function isSoldOut(p){
-return Number(p.stock??1)<=0;
-}
-
-function render(){
-const categories=["All",...new Set(products.map(p=>p.category).filter(Boolean))];
-
-document.getElementById("categories").innerHTML=categories.map(c=>
-"<button class='cat "+(c===selectedCategory?"active":"")+"' onclick='setCategory("+JSON.stringify(c)+")'>"+
-escapeHtml(c)+"</button>"
-).join("");
-
-const q=document.getElementById("search").value.toLowerCase().trim();
-
-const list=products.filter(p=>{
-const name=String(p.name||"").toLowerCase();
-const cat=String(p.category||"").toLowerCase();
-return (selectedCategory==="All"||p.category===selectedCategory)&&
-(!q||name.includes(q)||cat.includes(q));
-});
-
-document.getElementById("products").innerHTML=list.map(p=>{
-const imgs=productImages(p);
-const image=imgs[0]||PLACEHOLDER;
-const sold=isSoldOut(p);
-
-return `
-<article class="card">
-<img src="${escapeHtml(image)}" alt="${escapeHtml(p.name)}">
-<div class="card-body">
-<b>${escapeHtml(p.name)}</b>
-<div class="price">ETB ${Number(p.price||0).toLocaleString()}</div>
-<a href="javascript:void(0)" onclick="showDetail(${p.id})" style="font-size:12px;color:#243b8f;font-weight:bold">View Detail</a>
-<button class="buy" style="margin-top:9px" onclick="openOrder(${p.id})">
-${sold?"Sold out":"Order Now"}
-</button>
-</div>
-</article>`;
-}).join("")||"<div class='order-item'>No products found.</div>";
-}
-
-function setCategory(c){
-selectedCategory=c;
-render();
+function getProductImages(p){
+  let imgs = [];
+  if(Array.isArray(p && p.product_images)) imgs = p.product_images.filter(Boolean);
+  if(!imgs.length && p && p.image_url) imgs = [p.image_url];
+  return imgs.length ? imgs : [PLACEHOLDER];
 }
 
 function scrollToProducts(){
-document.getElementById("products").scrollIntoView({behavior:"smooth"});
+  const el = document.getElementById("productsSection");
+  if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
-function openMyOrdersNav(){
-openMyOrders();
+function isSoldOut(p){ return Number(p.stock ?? 1) <= 0; }
+
+function toIntlPhone(phone){
+  const d = String(phone || "").replace(/\D/g, "");
+  if(d.startsWith("251")) return "+" + d;
+  if(d.startsWith("0")) return "+251" + d.slice(1);
+  if(d.length === 9) return "+251" + d;
+  return "+" + d;
 }
 
-function openSignInNav(){
-openAuth("login");
+// ======================================================================
+// 5. STOREFRONT: products, categories, details, deposit info, contact
+// ======================================================================
+
+async function fetchProducts(){
+  const { data, error } = await db.from('products').select('*').order('created_at', { ascending: false });
+  if(error) { console.error(error); alert("Error fetching products: " + error.message); return; }
+  products = data || [];
+  render();
 }
 
-document.getElementById("search").addEventListener("input",render);
+function render(){
+  const cats = ["All", ...new Set(products.map(p => p.category).filter(Boolean))];
+  document.getElementById("categories").innerHTML = cats.map(c => `<button class="cat ${c===selectedCategory?'active':''}" onclick="setCategory(decodeURIComponent('${encodeURIComponent(c).replace(/'/g,'%27')}'))">${escapeHtml(c)}</button>`).join("");
 
-document.getElementById("pImage").addEventListener("change",function(){
-const files=Array.from(this.files||[]);
+  const q = document.getElementById("search").value.toLowerCase().trim();
+  const list = products.filter(p => (selectedCategory === "All" || p.category === selectedCategory) && (!q || p.name.toLowerCase().includes(q) || (p.category && p.category.toLowerCase().includes(q))));
 
-if(files.length>5){
-alert("You can select up to 5 images.");
-this.value="";
-document.getElementById("pImagePreview").innerHTML="";
-return;
+  document.getElementById("products").innerHTML = list.map(p => {
+    const imgs = getProductImages(p);
+    return `
+    <article class="card ${isSoldOut(p) ? 'soldout' : ''}">
+      <img src="${escapeHtml(imgs[0])}" alt="${escapeHtml(p.name)}">
+      <div class="card-body">
+        <b>${escapeHtml(p.name)}</b>
+        <div class="price">ETB ${Number(p.price).toLocaleString()}</div>
+        ${imgs.length > 1 ? `<small style="color:#667085">📷 ${imgs.length} photos</small><br>` : ""}
+        <a href="javascript:void(0)" onclick="showDetail(${p.id})" style="font-size:12px;color:#243b8f;font-weight:bold;text-decoration:underline">View Detail</a>
+        <button class="buy ${isSoldOut(p) ? 'soldout' : ''}" style="margin-top:9px" ${isSoldOut(p) ? 'disabled' : ''} onclick="openOrder(${p.id})">${isSoldOut(p) ? 'Sold out' : 'Order Now'}</button>
+      </div>
+    </article>`;
+  }).join("") || "<div class='order-item'>No products found.</div>";
 }
 
-document.getElementById("pImagePreview").innerHTML=files.map(f=>
-`<img src="${URL.createObjectURL(f)}" alt="preview">`
-).join("");
-});
+function setCategory(c){ selectedCategory = c; render(); }
 
 function parseSpecs(text){
-return String(text||"").split("\n")
-.map(x=>x.trim()).filter(Boolean)
-.map(line=>{
-const i=line.indexOf(":");
-return i===-1?[line,""]:[line.slice(0,i).trim(),line.slice(i+1).trim()];
-});
+  return String(text || "").split("\n").map(l => l.trim()).filter(Boolean).map(line => {
+    const i = line.indexOf(":");
+    return i === -1 ? [line, ""] : [line.slice(0, i).trim(), line.slice(i + 1).trim()];
+  });
 }
 
 function showDetail(id){
-const p=products.find(x=>x.id===id);
-if(!p)return;
+  const p = products.find(x => x.id === id);
+  if(!p) return;
+  const imgs = getProductImages(p);
+  const specs = parseSpecs(p.specs);
+  const specsHtml = specs.length ? `
+    <table style="width:100%;border-collapse:collapse;margin-top:10px">
+      ${specs.map(([k,v]) => `
+        <tr style="border-top:1px solid #eef0f4">
+          <td style="padding:7px 4px;color:#667085;font-size:13px;width:42%">${escapeHtml(k)}</td>
+          <td style="padding:7px 4px;font-size:13px;font-weight:bold">${escapeHtml(v)}</td>
+        </tr>`).join("")}
+    </table>` : "";
 
-const imgs=productImages(p);
-const main=imgs[0]||PLACEHOLDER;
-const specs=parseSpecs(p.specs);
-
-const gallery=imgs.length>1?
-`<div class="gallery">${imgs.map(x=>
-`<img src="${escapeHtml(x)}" alt="${escapeHtml(p.name)}">`
-).join("")}</div>`:"";
-
-const specsHtml=specs.length?
-`<table style="width:100%;border-collapse:collapse">
-${specs.map(x=>`
-<tr style="border-top:1px solid #eee">
-<td style="padding:7px;color:#667085">${escapeHtml(x[0])}</td>
-<td style="padding:7px;font-weight:bold">${escapeHtml(x[1])}</td>
-</tr>`).join("")}
-</table>`:"";
-
-document.getElementById("detailContent").innerHTML=`
-<img src="${escapeHtml(main)}" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px">
-${gallery}
-<h2>${escapeHtml(p.name)}</h2>
-<div class="price" style="font-size:18px">ETB ${Number(p.price||0).toLocaleString()}</div>
-${p.description?`<p style="color:#667085">${escapeHtml(p.description)}</p>`:""}
-${specsHtml}
-<button class="buy" style="margin-top:16px" onclick="closeModal('detailModal');openOrder(${p.id})">Order Now</button>
-`;
-
-openModal("detailModal");
+  document.getElementById("detailContent").innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(${Math.min(imgs.length,5)},1fr);gap:6px">
+      ${imgs.map((img,i)=>`<img src="${escapeHtml(img)}" alt="${escapeHtml(p.name)} ${i+1}" style="width:100%;height:90px;object-fit:cover;border-radius:9px">`).join("")}
+    </div>
+    <h2 style="margin:14px 0 2px">${escapeHtml(p.name)}</h2>
+    <div class="price" style="font-size:18px">ETB ${Number(p.price).toLocaleString()}</div>
+    <div style="font-weight:bold;color:${isSoldOut(p) ? '#d92d20' : '#079455'};margin-bottom:6px">${isSoldOut(p) ? 'Sold out' : 'Available'}</div>
+    ${p.description ? `<p style="color:#667085;line-height:1.5">${escapeHtml(p.description)}</p>` : ""}
+    ${specsHtml}
+    <button class="buy ${isSoldOut(p) ? 'soldout' : ''}" style="margin-top:16px" ${isSoldOut(p) ? 'disabled' : ''} onclick="closeModal('detailModal');openOrder(${p.id})">${isSoldOut(p) ? 'Sold out' : 'Order Now'}</button>`;
+  openModal("detailModal");
 }
+
+function renderDepositInfo(){
+  document.getElementById("depositAmount").textContent = Number(DEPOSIT_AMOUNT).toLocaleString();
+  document.getElementById("depositName").textContent = ACCOUNT_NAME;
+  document.getElementById("depositAccounts").innerHTML = PAYMENT_OPTIONS
+    .map(o => `<b>${escapeHtml(o.provider)}:</b> ${escapeHtml(o.account)}`)
+    .join("<br>");
+}
+
+function renderContact(){
+  const box = document.getElementById("contactBox");
+  if(!CONTACT_PHONE || CONTACT_PHONE.includes("X")) return;
+  const tel = CONTACT_PHONE.replace(/\s/g, "");
+  let html = `<b>Need help with your order?</b><br>📞 <a href="tel:${escapeHtml(tel)}" style="color:#243b8f;font-weight:bold">${escapeHtml(CONTACT_PHONE)}</a>`;
+  if(TELEGRAM_USERNAME){
+    html += ` &nbsp;•&nbsp; ✈️ <a href="https://t.me/${escapeHtml(TELEGRAM_USERNAME)}" target="_blank" rel="noopener" style="color:#243b8f;font-weight:bold">Telegram</a>`;
+  }
+  box.innerHTML = html;
+  box.style.display = "block";
+}
+
+async function loadDepositAmount(){
+  try{
+    const {data,error} = await db.from("market_settings").select("deposit_amount").eq("id",1).maybeSingle();
+    if(!error && data && data.deposit_amount !== null){
+      DEPOSIT_AMOUNT = Number(data.deposit_amount);
+    }
+  }catch(e){ console.warn("Deposit settings unavailable", e); }
+  renderDepositInfo();
+  const a = document.getElementById("adminDepositAmount");
+  const i = document.getElementById("adminDepositInput");
+  if(a) a.textContent = Number(DEPOSIT_AMOUNT).toLocaleString();
+  if(i) i.value = DEPOSIT_AMOUNT;
+}
+
+// ======================================================================
+// 6. ORDER FORM: open, photos, payment screenshot, validation, submit
+// ======================================================================
 
 function openOrder(id){
-selectedProduct=products.find(p=>p.id===id);
+  selectedProduct = products.find(p => p.id === id);
+  if(!selectedProduct){ alert("Product not found."); return; }
+  if(isSoldOut(selectedProduct)){ alert("❌ Sorry, this product is sold out."); return; }
+  if(!currentUser){
+    pendingOrderProductId = id;
+    openAuth("login", "Please log in or create an account to place an order. You can then follow all your orders in 'My Orders'.");
+    return;
+  }
 
-if(!selectedProduct){
-alert("Product not found.");
-return;
-}
+  document.getElementById("selectedProduct").textContent =
+    selectedProduct.name + " — ETB " + Number(selectedProduct.price).toLocaleString();
 
-if(isSoldOut(selectedProduct)){
-alert("Sorry, this product is sold out.");
-return;
-}
+  document.getElementById("selectedProductPreview").innerHTML = `
+    <div style="display:flex;gap:12px;align-items:center;background:#f7f9fc;padding:10px;border-radius:12px">
+      <img src="${escapeHtml(getProductImages(selectedProduct)[0])}"
+           alt="${escapeHtml(selectedProduct.name)}"
+           style="width:90px;height:90px;object-fit:cover;border-radius:10px">
+      <div>
+        <b>${escapeHtml(selectedProduct.name)}</b><br>
+        <span>ETB ${Number(selectedProduct.price).toLocaleString()}</span>
+      </div>
+    </div>`;
 
-if(!currentUser){
-pendingOrderProductId=id;
-openAuth("login","Please log in to place an order.");
-return;
-}
-
-document.getElementById("selectedProduct").textContent=
-selectedProduct.name+" — ETB "+Number(selectedProduct.price||0).toLocaleString();
-
-const imgs=productImages(selectedProduct);
-
-document.getElementById("selectedProductPreview").innerHTML=`
-<div style="display:flex;gap:12px;align-items:center;background:#f7f9fc;padding:10px;border-radius:12px">
-<img src="${escapeHtml(imgs[0]||PLACEHOLDER)}" style="width:90px;height:90px;object-fit:cover;border-radius:10px">
-<div><b>${escapeHtml(selectedProduct.name)}</b><br>ETB ${Number(selectedProduct.price||0).toLocaleString()}</div>
-</div>`;
-
-document.getElementById("orderForm").reset();
-document.getElementById("quantity").value=1;
-
-const meta=currentUser.user_metadata||{};
-document.getElementById("fullName").value=meta.full_name||"";
-document.getElementById("phone").value=meta.phone||"";
-document.getElementById("studentId").value=meta.student_id||"";
-
-clearPhoto();
-clearPaymentProof();
-openModal("orderModal");
+  document.getElementById("orderForm").reset();
+  document.getElementById("quantity").value = 1;
+  const meta = (currentUser && currentUser.user_metadata) || {};
+  document.getElementById("fullName").value = meta.full_name || "";
+  document.getElementById("phone").value = meta.phone || "";
+  document.getElementById("studentId").value = meta.student_id || "";
+  clearPhoto();
+  clearPaymentProof();
+  openModal("orderModal");
 }
 
 function setPhoto(input){
-const file=input.files[0];
-if(!file)return;
-studentPhotoFile=file;
-input.value="";
-
-document.getElementById("photoPreview").innerHTML=`
-<img src="${URL.createObjectURL(file)}" style="width:80px;height:80px;object-fit:cover;border-radius:10px">
-<button type="button" class="close" style="float:none" onclick="clearPhoto()">Remove</button>`;
+  const file = input.files[0];
+  if(!file) return;
+  studentPhotoFile = file;
+  input.value = "";
+  const url = URL.createObjectURL(file);
+  document.getElementById("photoPreview").innerHTML = `
+    <div style="display:flex;gap:10px;align-items:center">
+      <img src="${url}" alt="Student photo"
+           style="width:80px;height:80px;object-fit:cover;border-radius:10px">
+      <button type="button" class="close" style="float:none" onclick="clearPhoto()">Remove</button>
+    </div>`;
 }
 
 function clearPhoto(){
-studentPhotoFile=null;
-document.getElementById("photoPreview").innerHTML="";
+  studentPhotoFile = null;
+  document.getElementById("photoPreview").innerHTML = "";
 }
 
 function setPaymentProof(input){
-const file=input.files[0];
-if(!file)return;
-paymentProofFile=file;
-input.value="";
-
-document.getElementById("paymentProofPreview").innerHTML=`
-<img src="${URL.createObjectURL(file)}" style="width:80px;height:80px;object-fit:cover;border-radius:10px">
-<button type="button" class="close" style="float:none" onclick="clearPaymentProof()">Remove</button>`;
+  const file = input.files[0];
+  if(!file) return;
+  paymentProofFile = file;
+  input.value = "";
+  const url = URL.createObjectURL(file);
+  document.getElementById("paymentProofPreview").innerHTML = `
+    <div style="display:flex;gap:10px;align-items:center">
+      <img src="${url}" alt="Payment screenshot"
+           style="width:80px;height:80px;object-fit:cover;border-radius:10px">
+      <button type="button" class="close" style="float:none" onclick="clearPaymentProof()">Remove</button>
+    </div>`;
 }
 
 function clearPaymentProof(){
-paymentProofFile=null;
-document.getElementById("paymentProofPreview").innerHTML="";
+  paymentProofFile = null;
+  document.getElementById("paymentProofPreview").innerHTML = "";
 }
 
 async function submitOrder(e){
-e.preventDefault();
+  e.preventDefault();
 
-if(!selectedProduct){
-alert("Please select a product.");
-return;
+  if(!selectedProduct){ alert("Please select a product first."); return; }
+  if(isSoldOut(selectedProduct)){ alert("❌ Sorry, this product is sold out."); return; }
+  if(!currentUser){
+    pendingOrderProductId = selectedProduct.id;
+    closeModal("orderModal");
+    openAuth("login", "Please log in to place your order.");
+    return;
+  }
+
+  const requiredFields = [
+    ["fullName", "Full Name"],
+    ["phone", "Phone Number"],
+    ["studentId", "Student ID"],
+    ["block", "Block Number"],
+    ["dorm", "Dorm Number"],
+    ["section", "Section"],
+    ["department", "Department"]
+  ];
+
+  document.querySelectorAll("#orderForm input, #orderForm textarea").forEach(el => el.style.borderColor = "");
+  const missing = [];
+  let firstEl = null;
+  for(const [id, label] of [...requiredFields, ["quantity", "Quantity"]]){
+    const el = document.getElementById(id);
+    if(!el.value.trim()){
+      el.style.borderColor = "#d92d20";
+      missing.push(label);
+      if(!firstEl) firstEl = el;
+    }
+  }
+  if(!paymentProofFile) missing.push("Payment Screenshot");
+  if(missing.length){
+    alert("❌ INVALID ORDER\nትዕዛዝዎ ተቀባይነት የለውም።\n\nእባክዎ እነዚህን ይሙሉ / Please fill in:\n• " + missing.join("\n• "));
+    if(firstEl) firstEl.focus();
+    return;
+  }
+
+  const phoneValue = document.getElementById("phone").value.replace(/\s/g, "");
+  if(!/^(09|07)\d{8}$/.test(phoneValue)){
+    alert("❌ Invalid phone number. Must start with 09 or 07 and have 10 digits (e.g. 0912345678).");
+    document.getElementById("phone").focus();
+    return;
+  }
+
+  const qty = Number(document.getElementById("quantity").value);
+  if(!qty || qty < 1){ alert("Please enter a valid quantity."); return; }
+
+  if(!paymentProofFile){
+    alert("❌ Please upload your payment screenshot (deposit ETB " + DEPOSIT_AMOUNT + ").");
+    return;
+  }
+
+  const btn = document.getElementById("orderSubmitBtn");
+  btn.disabled = true;
+  btn.textContent = "Submitting Order...";
+
+  let paymentProofPath = null;
+  let photoPath = null;
+  const cleanupUploads = async () => {
+    if(paymentProofPath) await db.storage.from("payment-proofs").remove([paymentProofPath]).catch(()=>{});
+    if(photoPath) await db.storage.from("student-photos").remove([photoPath]).catch(()=>{});
+  };
+  {
+    const safeName = paymentProofFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const fileName = `payment_${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
+    const { data: uploadData, error: uploadErr } =
+      await db.storage.from("payment-proofs").upload(fileName, paymentProofFile, {
+        upsert: false,
+        contentType: paymentProofFile.type
+      });
+    if(uploadErr){
+      alert("Payment screenshot upload failed: " + uploadErr.message);
+      btn.disabled = false;
+      btn.textContent = "✅ Place Order";
+      return;
+    }
+    if(uploadData) paymentProofPath = uploadData.path;
+  }
+
+  const photoFile = studentPhotoFile;
+
+  if(photoFile){
+    const safeName = photoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const fileName = `student_${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
+
+    const { data: uploadData, error: uploadErr } =
+      await db.storage.from("student-photos").upload(fileName, photoFile, {
+        upsert: false,
+        contentType: photoFile.type
+      });
+
+    if(uploadErr){
+      await cleanupUploads();
+      alert("Student photo upload failed: " + uploadErr.message);
+      btn.disabled = false;
+      btn.textContent = "✅ Place Order";
+      return;
+    }
+
+    if(uploadData) photoPath = uploadData.path;
+  }
+
+  const newOrder = {
+    user_id: currentUser.id,
+    product_id: selectedProduct.id,
+    product_name: selectedProduct.name,
+    product_price: selectedProduct.price,
+    product_image_url: selectedProduct.image_url,
+    quantity: qty,
+    full_name: document.getElementById("fullName").value.trim(),
+    phone: phoneValue,
+    student_id: document.getElementById("studentId").value.trim(),
+    block_number: document.getElementById("block").value.trim(),
+    dorm_number: document.getElementById("dorm").value.trim(),
+    section: document.getElementById("section").value.trim(),
+    department: document.getElementById("department").value.trim(),
+    delivery_note: document.getElementById("note").value.trim(),
+    student_photo_url: photoPath,
+    payment_proof_url: paymentProofPath,
+    payment_reference: document.getElementById("paymentRef").value.trim(),
+    deposit_amount: DEPOSIT_AMOUNT,
+    payment_status: "Pending",
+    status: "New Order"
+  };
+
+  const { data: inserted, error } = await db.from("orders").insert([newOrder]).select("id").single();
+
+  btn.disabled = false;
+  btn.textContent = "✅ Place Order";
+
+  if(error){
+    await cleanupUploads();
+    alert("❌ Order Failed: " + error.message);
+    return;
+  }
+
+  closeModal("orderModal");
+  document.getElementById("orderForm").reset();
+  clearPhoto();
+  clearPaymentProof();
+  const contactLine = (CONTACT_PHONE && !CONTACT_PHONE.includes("X")) ? "\nQuestions? Call " + CONTACT_PHONE : "";
+  alert("✅ ORDER PLACED SUCCESSFULLY!\n\nOrder number: #" + shortId(inserted && inserted.id) +
+        "\nStatus: waiting for payment verification.\n\nYou can follow it anytime in 'My Orders'." + contactLine);
+  openMyOrders();
 }
 
-if(!currentUser){
-pendingOrderProductId=selectedProduct.id;
-closeModal("orderModal");
-openAuth("login");
-return;
+// ======================================================================
+// 7. ACCOUNT: login gate, sign up, login, logout, session
+// ======================================================================
+
+function renderAuthUI(){
+  const area = document.getElementById("authArea");
+  if(!currentUser){ area.innerHTML = ""; return; }
+  const meta = currentUser.user_metadata || {};
+  const first = String(meta.full_name || currentUser.email || "").split(" ")[0];
+  area.innerHTML = `<b>👋 ሰላም ${escapeHtml(first)}!</b>`;
 }
-
-const fields=[
-["fullName","Full Name"],
-["phone","Phone Number"],
-["studentId","Student ID"],
-["block","Block Number"],
-["dorm","Dorm Number"],
-["section","Section"],
-["department","Department"]
-];
-
-for(const [id,label] of fields){
-const el=document.getElementById(id);
-if(!el.value.trim()){
-alert(label+" can't be empty.");
-el.focus();
-return;
-}
-}
-
-const phone=document.getElementById("phone").value.replace(/\s/g,"");
-
-if(!/^(09|07)\d{8}$/.test(phone)){
-alert("Phone number must start with 09 or 07 and contain 10 digits.");
-return;
-}
-
-const qty=Number(document.getElementById("quantity").value);
-
-if(!qty||qty<1){
-alert("Enter a valid quantity.");
-return;
-}
-
-if(!paymentProofFile){
-alert("Please upload the payment screenshot.");
-return;
-}
-
-const btn=document.getElementById("orderSubmitBtn");
-btn.disabled=true;
-btn.textContent="Submitting Order...";
-
-const safe=(x)=>x.replace(/[^a-zA-Z0-9._-]/g,"_");
-
-let paymentPath=null;
-
-{
-const name=`payment_${Date.now()}_${safe(paymentProofFile.name)}`;
-
-const {data,error}=await db.storage.from("payment-proofs").upload(
-name,paymentProofFile,{upsert:false,contentType:paymentProofFile.type}
-);
-
-if(error){
-alert("Payment screenshot upload failed: "+error.message);
-btn.disabled=false;
-btn.textContent="✅ Place Order";
-return;
-}
-
-paymentPath=data?.path||null;
-}
-
-let photoPath=null;
-
-if(studentPhotoFile){
-const name=`${currentUser.id}/student_${Date.now()}_${safe(studentPhotoFile.name)}`;
-
-const {data,error}=await db.storage.from("student-photos").upload(
-name,studentPhotoFile,{upsert:false,contentType:studentPhotoFile.type}
-);
-
-if(error){
-alert("Student photo upload failed: "+error.message);
-btn.disabled=false;
-btn.textContent="✅ Place Order";
-return;
-}
-
-photoPath=data?.path||null;
-}
-
-const imgs=productImages(selectedProduct);
-
-const order={
-user_id:currentUser.id,
-product_id:selectedProduct.id,
-product_name:selectedProduct.name,
-product_price:selectedProduct.price,
-product_image_url:imgs[0]||selectedProduct.image_url||null,
-quantity:qty,
-full_name:document.getElementById("fullName").value.trim(),
-phone:phone,
-student_id:document.getElementById("studentId").value.trim(),
-block_number:document.getElementById("block").value.trim(),
-dorm_number:document.getElementById("dorm").value.trim(),
-section:document.getElementById("section").value.trim(),
-department:document.getElementById("department").value.trim(),
-delivery_note:document.getElementById("note").value.trim(),
-student_photo_url:photoPath,
-payment_proof_url:paymentPath,
-payment_reference:document.getElementById("paymentRef").value.trim(),
-payment_status:"Pending",
-deposit_amount:DEPOSIT_AMOUNT,
-status:"New Order"
-};
-
-const {data,error}=await db.from("orders").insert([order]).select("id").single();
-
-btn.disabled=false;
-btn.textContent="✅ Place Order";
-
-if(error){
-alert("Order Failed: "+error.message);
-return;
-}
-
-closeModal("orderModal");
-document.getElementById("orderForm").reset();
-clearPhoto();
-clearPaymentProof();
-
-alert("ORDER PLACED SUCCESSFULLY!\n\nOrder number: #"+shortId(data.id));
-openMyOrders();
-}
-
-function renderAuthUI(){}
 
 function setAuthMode(mode){
-authMode=mode;
-const signup=mode==="signup";
-
-document.getElementById("authTitle").textContent=signup?"📝 Create Account":"👤 Login";
-document.getElementById("signupFields").style.display=signup?"block":"none";
-document.getElementById("authSubmitBtn").textContent=signup?"Create Account":"Login";
-document.getElementById("authToggle").textContent=signup?"Already have an account? Login":"New here? Create an account";
+  authMode = mode;
+  const signup = mode === "signup";
+  document.getElementById("authTitle").textContent = signup ? "📝 Create Account" : "👤 Login";
+  document.getElementById("signupFields").style.display = signup ? "block" : "none";
+  document.getElementById("authSubmitBtn").textContent = signup ? "Create Account" : "Login";
+  document.getElementById("authSubmitBtn").disabled = false;
+  document.getElementById("authToggle").textContent = signup ? "Already have an account? Login" : "New here? Create an account";
+  document.getElementById("authPassword").setAttribute("autocomplete", signup ? "new-password" : "current-password");
 }
 
-function toggleAuthMode(){
-setAuthMode(authMode==="login"?"signup":"login");
-}
+function toggleAuthMode(){ setAuthMode(authMode === "login" ? "signup" : "login"); }
 
-function openAuth(mode="login",notice=""){
-setAuthMode(mode);
-
-const n=document.getElementById("authNotice");
-
-if(notice){
-n.textContent=notice;
-n.style.display="block";
-}else{
-n.style.display="none";
-}
-
-openModal("authModal");
+function openAuth(mode = "login", notice = ""){
+  setAuthMode(mode);
+  const n = document.getElementById("authNotice");
+  if(notice){ n.textContent = notice; n.style.display = "block"; }
+  else { n.style.display = "none"; }
+  openModal("authModal");
 }
 
 async function submitAuth(){
-const email=document.getElementById("authEmail").value.trim();
-const password=document.getElementById("authPassword").value;
+  const raw = document.getElementById("authEmail").value.replace(/\s/g, "");
+  const password = document.getElementById("authPassword").value;
+  const btn = document.getElementById("authSubmitBtn");
+  if(!raw || !password){ alert("❌ Enter your phone number and password."); return; }
+  const phoneOk = /^(09|07)\d{8}$/.test(raw);
+  const isEmail = raw.includes("@");
+  // Students log in with their phone number; an email (e.g. admin) is still accepted.
+  const email = isEmail ? raw : (phoneOk ? raw + "@kingmarket.app" : null);
+  if(!email){ alert("❌ Invalid phone number. Must start with 09 or 07 and have 10 digits."); return; }
 
-if(!email||!password){
-alert("Enter email and password.");
-return;
-}
+  let user = null;
 
-const btn=document.getElementById("authSubmitBtn");
-btn.disabled=true;
+  if(authMode === "signup"){
+    const full_name = document.getElementById("suName").value.trim();
+    const phone = raw;
+    const student_id = document.getElementById("suStudentId").value.trim();
+    if(full_name.length < 3){ alert("❌ Enter your full name."); return; }
+    if(!phoneOk){ alert("❌ Invalid phone number. Must start with 09 or 07 and have 10 digits."); return; }
+    if(!student_id){ alert("❌ Enter your student ID."); return; }
+    if(password.length < 6){ alert("❌ Password must be at least 6 characters."); return; }
 
-if(authMode==="signup"){
-const full_name=document.getElementById("suName").value.trim();
-const phone=document.getElementById("suPhone").value.replace(/\s/g,"");
-const student_id=document.getElementById("suStudentId").value.trim();
+    btn.disabled = true; btn.textContent = "Creating account...";
+    const { data, error } = await db.auth.signUp({
+      email, password, options: { data: { full_name, phone, student_id } }
+    });
+    if(error){ setAuthMode("signup"); alert("❌ Sign up failed: " + error.message); return; }
+    if(!data.session){
+      setAuthMode("login");
+      alert("✅ Account created. Please log in with your phone number and password.");
+      return;
+    }
+    user = data.session.user;
+  } else {
+    btn.disabled = true; btn.textContent = "Logging in...";
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    if(error){ setAuthMode("login"); alert("❌ Login failed: " + error.message); return; }
+    user = data.user;
+  }
 
-if(full_name.length<3){
-alert("Enter your full name.");
-btn.disabled=false;
-return;
-}
+  currentUser = user;
+  renderAuthUI();
+  document.getElementById("authPassword").value = "";
+  setAuthMode(authMode);
+  closeModal("authModal");
 
-if(!/^(09|07)\d{8}$/.test(phone)){
-alert("Enter a valid Ethiopian phone number.");
-btn.disabled=false;
-return;
-}
-
-if(!student_id){
-alert("Enter your student ID.");
-btn.disabled=false;
-return;
-}
-
-if(password.length<6){
-alert("Password must be at least 6 characters.");
-btn.disabled=false;
-return;
-}
-
-btn.textContent="Creating account...";
-
-const {data,error}=await db.auth.signUp({
-email,
-password,
-options:{data:{full_name,phone,student_id}}
-});
-
-if(error){
-alert("Sign up failed: "+error.message);
-btn.disabled=false;
-return;
-}
-
-if(!data.session){
-setAuthMode("login");
-alert("Account created. Check your email and then log in.");
-btn.disabled=false;
-return;
-}
-
-currentUser=data.session.user;
-
-}else{
-
-btn.textContent="Logging in...";
-
-const {data,error}=await db.auth.signInWithPassword({email,password});
-
-if(error){
-alert("Login failed: "+error.message);
-btn.disabled=false;
-return;
-}
-
-currentUser=data.user;
-}
-
-btn.disabled=false;
-btn.textContent=authMode==="signup"?"Create Account":"Login";
-
-closeModal("authModal");
-
-if(pendingOrderProductId!==null){
-const id=pendingOrderProductId;
-pendingOrderProductId=null;
-openOrder(id);
-}
+  if(pendingOrderProductId !== null){
+    const pid = pendingOrderProductId;
+    pendingOrderProductId = null;
+    openOrder(pid);
+  }
 }
 
 async function logoutStudent(){
-await db.auth.signOut();
-currentUser=null;
-closeModal("myOrdersModal");
-closeModal("adminModal");
+  await db.auth.signOut();
+  currentUser = null;
+  adminSignedIn = false;
+  setBadge(0);
+  closeModal("myOrdersModal");
+  closeModal("adminModal");
+  renderAuthUI();
 }
 
-function myOrderCard(o){
-const price=Number(o.product_price||0);
-const total=price*Number(o.quantity||0);
-const idx=FLOW.indexOf(o.status);
+async function updateSessionUI(session){
+  currentUser = session ? session.user : null;
+  renderAuthUI();
+  document.body.classList.toggle("loggedout", !session);
+  const adminBtn = document.getElementById("adminNavBtn");
+  const nav = document.querySelector(".bottom-nav");
+  if(!session){
+    adminSignedIn = false;
+    adminBtn.style.display = "none";
+    nav.style.gridTemplateColumns = "repeat(3,1fr)";
+    if(document.getElementById("authModal").style.display !== "block") openAuth("login");
+    setBadge(0);
+    document.getElementById("adminModal").style.display = "none";
+    document.getElementById("myOrdersModal").style.display = "none";
+    return;
+  }
+  const { data: roleRow } = await db.from("user_roles")
+    .select("role").eq("user_id", session.user.id).maybeSingle();
+  closeModal("authModal");
+  adminSignedIn = !!roleRow && roleRow.role === "admin";
+  adminBtn.style.display = adminSignedIn ? "" : "none";
+  nav.style.gridTemplateColumns = adminSignedIn ? "repeat(4,1fr)" : "repeat(3,1fr)";
+  refreshBadge();
+}
 
-return `
-<div class="order-item">
-<div style="display:flex;gap:12px">
-<img src="${escapeHtml(o.product_image_url||PLACEHOLDER)}" style="width:70px;height:70px;object-fit:cover;border-radius:10px">
-<div>
-<b>${escapeHtml(o.product_name||"Product")}</b><br>
-Qty ${o.quantity} • <b>ETB ${total.toLocaleString()}</b><br>
-<small>#${shortId(o.id)}</small>
-</div>
-</div>
-<div style="margin-top:10px">
-<span class="status">${escapeHtml(o.status)}</span>
-<div style="display:flex;gap:4px;margin-top:8px">
-${FLOW.map((x,i)=>`<div style="flex:1;height:6px;background:${i<=idx?"#243b8f":"#e0e4ec"};border-radius:3px"></div>`).join("")}
-</div>
-</div>
-</div>`;
+// ======================================================================
+// 8. MY ORDERS (student)
+// ======================================================================
+
+function myOrderCard(o){
+  const price = Number(o.product_price || 0);
+  const total = price * Number(o.quantity || 0);
+  const idx = FLOW.indexOf(o.status);
+  const cancelled = o.status === "Cancelled";
+  const bar = cancelled ? "" : `
+    <div style="display:flex;gap:4px;margin:10px 0 4px">
+      ${FLOW.map((_, i) => `<div style="flex:1;height:6px;border-radius:3px;background:${i <= idx ? '#243b8f' : '#e0e4ec'}"></div>`).join("")}
+    </div>`;
+  const pay = o.payment_status || "Pending";
+  const payText = pay === "Verified" ? "✅ Payment verified"
+    : pay === "Rejected" ? "❌ Payment rejected — please contact us" + ((CONTACT_PHONE && !CONTACT_PHONE.includes("X")) ? " (" + CONTACT_PHONE + ")" : "")
+    : "⏳ Payment waiting for verification";
+  const payColor = pay === "Verified" ? "#079455" : pay === "Rejected" ? "#d92d20" : "#dc6803";
+
+  return `
+    <div class="order-item">
+      <div style="display:flex;gap:12px;align-items:center">
+        <img src="${escapeHtml(o.product_image_url || PLACEHOLDER)}" alt="${escapeHtml(o.product_name || 'Product')}"
+             style="width:70px;height:70px;object-fit:cover;border-radius:10px">
+        <div style="flex:1">
+          <b>${escapeHtml(o.product_name || "Product")}</b><br>
+          <small>Qty ${escapeHtml(o.quantity)} • <b>ETB ${total.toLocaleString()}</b></small><br>
+          <small style="color:#667085">Order #${escapeHtml(shortId(o.id))} • ${new Date(o.created_at).toLocaleString()}</small>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <span class="status">${cancelled ? "❌ Cancelled" : escapeHtml(o.status)}</span>
+        ${bar}
+        <small style="color:${payColor};font-weight:bold">${payText}</small>
+      </div>
+    </div>`;
 }
 
 async function loadMyOrders(){
-if(!currentUser)return;
-
-const box=document.getElementById("myOrdersList");
-
-const {data,error}=await db.from("orders")
-.select("id,created_at,product_name,product_price,product_image_url,quantity,status,payment_status")
-.eq("user_id",currentUser.id)
-.order("created_at",{ascending:false});
-
-if(error){
-box.innerHTML="Could not load orders: "+escapeHtml(error.message);
-return;
-}
-
-box.innerHTML=data?.length?data.map(myOrderCard).join(""):"You haven't placed any orders yet.";
+  const box = document.getElementById("myOrdersList");
+  if(!currentUser) return;
+  const { data, error } = await db.from("orders")
+    .select("id, created_at, product_name, product_price, product_image_url, quantity, status, payment_status")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false });
+  if(error){ box.innerHTML = "<p>Could not load your orders: " + escapeHtml(error.message) + "</p>"; return; }
+  box.innerHTML = (data && data.length) ? data.map(myOrderCard).join("") : "<p>You haven't placed any orders yet.</p>";
 }
 
 function openMyOrders(){
-if(!currentUser){
-openAuth("login");
-return;
+  if(!currentUser){ openAuth("login"); return; }
+  document.getElementById("myOrdersList").textContent = "Loading...";
+  openModal("myOrdersModal");
+  loadMyOrders();
 }
 
-openModal("myOrdersModal");
-loadMyOrders();
+// ======================================================================
+// 9. ADMIN: badge + sound, open/logout
+// ======================================================================
+
+function setBadge(n){
+  const el = document.getElementById("adminBadge");
+  if(n > 0){ el.textContent = n; el.style.display = "inline-block"; }
+  else { el.style.display = "none"; }
+  document.title = (n > 0 ? "(" + n + ") " : "") + "King Online Market";
+}
+
+async function refreshBadge(){
+  if(!adminSignedIn){ setBadge(0); return; }
+  const { count, error } = await db.from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "New Order");
+  if(!error) setBadge(count || 0);
+}
+
+function beep(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = "sine"; osc.frequency.value = 880; gain.gain.value = 0.15;
+    osc.start(); osc.stop(ctx.currentTime + 0.25);
+    setTimeout(() => ctx.close(), 500);
+    if(navigator.vibrate) navigator.vibrate(200);
+  }catch(e){}
 }
 
 async function openAdminPanel(){
-if(adminSignedIn){
-await renderAdmin();
-openModal("adminModal");
-}else{
-openModal("loginModal");
-}
-}
-
-async function loginAdmin(){
-const email=document.getElementById("adminEmail").value.trim();
-const password=document.getElementById("adminPassword").value;
-
-const {data,error}=await db.auth.signInWithPassword({email,password});
-
-if(error){
-alert("Login Failed: "+error.message);
-return;
-}
-
-const {data:role,error:roleError}=await db.from("user_roles")
-.select("role")
-.eq("user_id",data.user.id)
-.maybeSingle();
-
-if(roleError){
-await db.auth.signOut();
-alert("Could not read admin role: "+roleError.message);
-return;
-}
-
-if(!role||role.role!=="admin"){
-await db.auth.signOut();
-alert("This account is not an Admin account.");
-return;
-}
-
-currentUser=data.user;
-adminSignedIn=true;
-
-closeModal("loginModal");
-await renderAdmin();
-openModal("adminModal");
+  if(adminSignedIn){
+    await renderAdmin();
+    openModal("adminModal");
+  }
 }
 
 async function logoutAdmin(){
-await db.auth.signOut();
-currentUser=null;
-adminSignedIn=false;
-closeModal("adminModal");
+  await db.auth.signOut();
+  adminSignedIn = false;
+  setBadge(0);
+  closeModal("adminModal");
+  alert("Logged out.");
 }
 
-function toIntlPhone(phone){
-const d=String(phone||"").replace(/\D/g,"");
-if(d.startsWith("251"))return "+"+d;
-if(d.startsWith("0"))return "+251"+d.slice(1);
-return "+251"+d;
+// ======================================================================
+// 10. ADMIN: orders (payment check, status, SMS, delete)
+// ======================================================================
+
+function orderMessage(o){
+  const product = products.find(p => String(p.id) === String(o.product_id));
+  const name = o.product_name || (product && product.name) || "ምርትዎ";
+  const contact = (CONTACT_PHONE && !CONTACT_PHONE.includes("X")) ? " ጥያቄ ካለዎት ይደውሉልን፦ " + CONTACT_PHONE : "";
+  return "ሰላም! የ " + name + " ትዕዛዝዎ ተረጋግጧል፣ በፍጥነት እናደርስልዎታለን።" + contact;
+}
+
+async function getSignedUrl(path, bucket = "student-photos"){
+  const key = bucket + ":" + path;
+  const c = signedCache.get(key);
+  if(c && c.exp > Date.now()) return { url: c.url };
+  const { data, error } = await db.storage.from(bucket).createSignedUrl(path, 600);
+  if(error || !data || !data.signedUrl) return { error: error ? error.message : "unknown error" };
+  signedCache.set(key, { url: data.signedUrl, exp: Date.now() + 540000 });
+  return { url: data.signedUrl };
+}
+
+async function setPaymentStatus(id, status){
+  const { error } = await db.from('orders').update({ payment_status: status }).eq('id', id);
+  if(error){ alert("Failed to update payment status: " + error.message); return; }
+  renderAdmin();
+}
+
+async function buildOrderCard(o, productMap){
+  const product = productMap.get(String(o.product_id));
+  const pName = o.product_name || (product && product.name) || "Product";
+  const pPrice = Number(o.product_price ?? (product && product.price) ?? 0);
+  const pImage = o.product_image_url || (product && product.image_url) || PLACEHOLDER;
+  const total = pPrice * Number(o.quantity || 0);
+  let studentPhotoHtml = "";
+
+  if(o.student_photo_url){
+    const res = await getSignedUrl(o.student_photo_url, "student-photos");
+    if(res.url){
+      studentPhotoHtml = `
+        <div style="margin-top:10px">
+          <b>Student Photo:</b><br>
+          <img src="${res.url}" alt="Student"
+               style="width:120px;height:120px;object-fit:cover;border-radius:12px;margin-top:6px">
+        </div>`;
+    } else {
+      studentPhotoHtml = `<br><small>Student photo saved, but could not be opened: ${escapeHtml(res.error)}</small>`;
+    }
+  }
+
+  let paymentProofHtml = "";
+  if(o.payment_proof_url){
+    const res = await getSignedUrl(o.payment_proof_url, "payment-proofs");
+    if(res.url){
+      paymentProofHtml = `<img src="${res.url}" alt="Payment proof"
+           style="width:120px;height:120px;object-fit:cover;border-radius:12px;margin-top:6px">`;
+    } else {
+      paymentProofHtml = `<small>Screenshot saved, but could not be opened: ${escapeHtml(res.error)}</small>`;
+    }
+  } else {
+    paymentProofHtml = "<small>No screenshot uploaded.</small>";
+  }
+
+  const payStatus = o.payment_status || "Pending";
+  const payColor = payStatus === "Verified" ? "#079455" : payStatus === "Rejected" ? "#d92d20" : "#dc6803";
+  const paymentSectionHtml = `
+    <div style="margin-top:12px;border-top:1px dashed #e0e4ec;padding-top:10px">
+      <b>💰 Payment:</b> <span style="color:${payColor};font-weight:bold">${escapeHtml(payStatus)}</span><br>
+      <small><b>Deposit:</b> ETB ${Number(o.deposit_amount ?? DEPOSIT_AMOUNT).toLocaleString()}</small><br>
+      ${o.payment_reference ? "<small><b>Reference:</b> " + escapeHtml(o.payment_reference) + "</small><br>" : ""}
+      ${paymentProofHtml}
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button type="button" class="mini" style="flex:1;background:#dcfae6;color:#067647" onclick="setPaymentStatus('${escapeHtml(o.id)}','Verified')">✅ Verify payment</button>
+        <button type="button" class="mini" style="flex:1;background:#fee4e2;color:#d92d20" onclick="setPaymentStatus('${escapeHtml(o.id)}','Rejected')">❌ Reject payment</button>
+      </div>
+    </div>`;
+
+  return `
+    <div class="order-item">
+      <div style="display:flex;gap:12px;align-items:center;background:#f7f9fc;padding:10px;border-radius:12px">
+        <img src="${escapeHtml(pImage)}" alt="${escapeHtml(pName)}"
+             style="width:90px;height:90px;object-fit:cover;border-radius:10px">
+        <div>
+          <b>📦 ${escapeHtml(pName)}</b><br>
+          <span>Price: ETB ${pPrice.toLocaleString()}</span><br>
+          <span>Quantity: ${escapeHtml(o.quantity)}</span><br>
+          <span><b>Total: ETB ${total.toLocaleString()}</b></span>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <b>Order ID:</b> ${escapeHtml(o.id)} <span style="color:#667085">(#${escapeHtml(shortId(o.id))})</span><br>
+        <span class="status">Status: ${escapeHtml(o.status)}</span><br>
+        <small>Date: ${new Date(o.created_at).toLocaleString()}</small><br><br>
+        <small>
+          <b>Student:</b> ${escapeHtml(o.full_name)}<br>
+          <b>Phone:</b> <a href="tel:${escapeHtml(String(o.phone || '').replace(/\s/g, ''))}" style="color:#243b8f;font-weight:bold">${escapeHtml(o.phone)}</a><br>
+          <b>ID:</b> ${escapeHtml(o.student_id)}<br>
+          <b>Block:</b> ${escapeHtml(o.block_number)} • <b>Dorm:</b> ${escapeHtml(o.dorm_number)}<br>
+          <b>Department:</b> ${escapeHtml(o.department)} • <b>Section:</b> ${escapeHtml(o.section)}
+        </small>
+        ${o.delivery_note ? "<br><small><b>Note:</b> " + escapeHtml(o.delivery_note) + "</small>" : ""}
+        ${studentPhotoHtml}
+        ${paymentSectionHtml}
+        <select onchange="changeStatus('${escapeHtml(o.id)}', this.value)"
+                style="margin-top:10px;width:100%;padding:9px">
+          ${STATUSES.map(s => `<option ${s===o.status ? "selected" : ""}>${s}</option>`).join("")}
+        </select>
+        <div style="margin-top:10px">
+          <a href="sms:${escapeHtml(toIntlPhone(o.phone))}?body=${encodeURIComponent(orderMessage(o))}"
+             style="display:block;text-align:center;text-decoration:none;padding:10px;border-radius:8px;background:#eef4ff;color:#243b8f;font-weight:bold">📩 Send SMS</a>
+        </div>
+        <button type="button" onclick="deleteOrder('${escapeHtml(o.id)}')"
+                style="margin-top:10px;width:100%;padding:10px;border:0;border-radius:8px;background:#fee4e2;color:#d92d20;font-weight:bold;cursor:pointer">🗑️ Delete order</button>
+      </div>
+    </div>`;
+}
+
+async function renderOrderList(){
+  const token = ++orderListToken;
+  const productMap = new Map(products.map(p => [String(p.id), p]));
+  const cards = await Promise.all(orders.map(o => buildOrderCard(o, productMap)));
+  if(token !== orderListToken) return;
+  document.getElementById("adminOrders").innerHTML = cards.join("") || "<p>No orders yet.</p>";
 }
 
 async function renderAdmin(){
-const {data,error}=await db.from("orders")
-.select("*")
-.order("created_at",{ascending:false});
+  const { data: fetchedOrders, error: err1 } = await db
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-if(error){
-document.getElementById("adminOrders").innerHTML=
-"Could not load orders: "+escapeHtml(error.message);
-return;
+  if(err1){
+    document.getElementById("adminOrders").innerHTML =
+      "<p>Could not load orders: " + escapeHtml(err1.message) + "</p>";
+    return;
+  }
+
+  orders = fetchedOrders || [];
+  loadDepositAmount();
+  refreshBadge();
+  renderOrderList();
+  renderAdminProducts();
 }
 
-orders=data||[];
-
-document.getElementById("adminOrders").innerHTML=orders.map(o=>{
-const product=products.find(p=>String(p.id)===String(o.product_id));
-const name=o.product_name||product?.name||"Product";
-const price=Number(o.product_price??product?.price??0);
-const total=price*Number(o.quantity||0);
-const image=o.product_image_url||productImages(product||{})[0]||PLACEHOLDER;
-
-return `
-<div class="order-item">
-<div style="display:flex;gap:12px;background:#f7f9fc;padding:10px;border-radius:12px">
-<img src="${escapeHtml(image)}" style="width:90px;height:90px;object-fit:cover;border-radius:10px">
-<div>
-<b>📦 ${escapeHtml(name)}</b><br>
-Price: ETB ${price.toLocaleString()}<br>
-Quantity: ${o.quantity}<br>
-<b>Total: ETB ${total.toLocaleString()}</b>
-</div>
-</div>
-
-<div style="margin-top:10px">
-<b>Order:</b> #${shortId(o.id)}<br>
-<b>Status:</b> ${escapeHtml(o.status)}<br>
-<small>${new Date(o.created_at).toLocaleString()}</small>
-<br><br>
-
-<b>Student:</b> ${escapeHtml(o.full_name)}<br>
-<b>Phone:</b> <a href="tel:${escapeHtml(o.phone)}">${escapeHtml(o.phone)}</a><br>
-<b>ID:</b> ${escapeHtml(o.student_id)}<br>
-<b>Block:</b> ${escapeHtml(o.block_number)}<br>
-<b>Dorm:</b> ${escapeHtml(o.dorm_number)}<br>
-<b>Department:</b> ${escapeHtml(o.department)}<br>
-<b>Section:</b> ${escapeHtml(o.section)}
-${o.delivery_note?`<br><b>Note:</b> ${escapeHtml(o.delivery_note)}`:""}
-
-${o.payment_reference?`<br><b>Payment Ref:</b> ${escapeHtml(o.payment_reference)}`:""}
-<br>
-
-<select onchange="changeStatus('${escapeHtml(o.id)}',this.value)" style="margin-top:10px;width:100%">
-${STATUSES.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}
-</select>
-
-<a href="sms:${escapeHtml(toIntlPhone(o.phone))}" style="display:block;text-align:center;margin-top:10px;padding:10px;background:#eef4ff;color:#243b8f;border-radius:8px;font-weight:bold">📩 Send SMS</a>
-
-<button onclick="deleteOrder('${escapeHtml(o.id)}')" style="margin-top:10px;width:100%;padding:10px;border:0;border-radius:8px;background:#fee4e2;color:#d92d20;font-weight:bold">🗑️ Delete Order</button>
-</div>
-</div>`;
-}).join("")||"<p>No orders yet.</p>";
-
-renderAdminProducts();
-}
-
-async function changeStatus(id,status){
-const {error}=await db.from("orders").update({status}).eq("id",id);
-if(error){
-alert("Failed to update status: "+error.message);
-return;
-}
-renderAdmin();
+async function changeStatus(id, newStatus){
+  const { error } = await db.from('orders').update({ status: newStatus }).eq('id', id);
+  if(error){ alert("Failed to update status: " + error.message); }
+  else { renderAdmin(); }
 }
 
 async function deleteOrder(id){
-if(!confirm("Delete this order?"))return;
-
-const {error}=await db.from("orders").delete().eq("id",id);
-
-if(error){
-alert("Failed to delete order: "+error.message);
-return;
+  if(!confirm("Delete this order? This can't be undone.")) return;
+  const { error } = await db.from('orders').delete().eq('id', id);
+  if(error){ alert("Failed to delete order: " + error.message); return; }
+  renderAdmin();
 }
 
-renderAdmin();
+// ======================================================================
+// 11. ADMIN: products (add, edit, sold out, delete) + deposit setting
+// ======================================================================
+
+function previewProductImages(input){
+  const files = Array.from(input.files || []);
+  const box = document.getElementById("productImagePreview");
+  if(files.length > 5){
+    alert("❌ You can select a maximum of 5 images.");
+    input.value = "";
+    box.innerHTML = "";
+    return;
+  }
+  box.innerHTML = files.map(file => `<img src="${URL.createObjectURL(file)}" alt="Product preview">`).join("");
+}
+
+async function saveDepositAmount(){
+  const input = document.getElementById("adminDepositInput");
+  const amount = Number(input && input.value);
+  if(!Number.isFinite(amount) || amount < 0){ alert("❌ Enter a valid deposit amount."); return; }
+  const {error} = await db.from("market_settings").upsert({id:1, deposit_amount:amount, updated_at:new Date().toISOString()});
+  if(error){ alert("❌ Could not save deposit amount: " + error.message); return; }
+  DEPOSIT_AMOUNT = amount;
+  renderDepositInfo();
+  document.getElementById("adminDepositAmount").textContent = amount.toLocaleString();
+  alert("✅ Deposit amount updated to ETB " + amount.toLocaleString());
 }
 
 function renderAdminProducts(){
-document.getElementById("adminProducts").innerHTML=products.map(p=>{
-const image=productImages(p)[0]||PLACEHOLDER;
-const sold=isSoldOut(p);
-
-return `
-<div class="order-item" style="display:flex;gap:12px;align-items:center">
-<img src="${escapeHtml(image)}" style="width:70px;height:70px;object-fit:cover;border-radius:9px">
-<div style="flex:1">
-<b>${escapeHtml(p.name)}</b><br>
-ETB ${Number(p.price||0).toLocaleString()}
-<br>
-<span style="color:${sold?"#d92d20":"#079455"}">${sold?"Sold out":"Available"}</span>
-
-<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-<button class="mini" onclick="toggleProduct(${p.id})">${sold?"✅ Available":"⛔ Sold out"}</button>
-<button class="mini" onclick="editProduct(${p.id})">✏️ Edit</button>
-<button class="mini" onclick="deleteProduct(${p.id})">🗑️ Delete</button>
-</div>
-</div>
-</div>`;
-}).join("")||"<p>No products yet.</p>";
+  document.getElementById("adminProducts").innerHTML = products.map(p => {
+    const sold = isSoldOut(p);
+    return `
+    <div class="order-item" style="display:flex;gap:12px;align-items:center">
+      <img src="${escapeHtml(getProductImages(p)[0])}"
+           alt="${escapeHtml(p.name)}"
+           style="width:70px;height:70px;object-fit:cover;border-radius:9px">
+      <div style="flex:1"><b>${escapeHtml(p.name)}</b><br>
+      ETB ${Number(p.price).toLocaleString()} •
+      <span style="font-weight:bold;color:${sold ? '#d92d20' : '#079455'}">${sold ? 'Sold out' : 'Available'}</span>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button type="button" class="mini" onclick="toggleProduct(${p.id})" style="background:${sold ? '#dcfae6' : '#fef0c7'};color:${sold ? '#067647' : '#93370d'}">${sold ? '✅ Mark available' : '⛔ Mark sold out'}</button>
+        <button type="button" class="mini" onclick="editProduct(${p.id})" style="background:#eef4ff;color:#243b8f">✏️ Edit</button>
+        <button type="button" class="mini" onclick="deleteProduct(${p.id})" style="background:#fee4e2;color:#d92d20">🗑️ Delete</button>
+      </div></div>
+    </div>`;
+  }).join("") || "<p>No products yet.</p>";
 }
 
 async function toggleProduct(id){
-const p=products.find(x=>x.id===id);
-if(!p)return;
-
-const stock=isSoldOut(p)?1:0;
-
-const {error}=await db.from("products")
-.update({stock})
-.eq("id",id);
-
-if(error){
-alert("Failed: "+error.message);
-return;
-}
-
-await fetchProducts();
-renderAdminProducts();
+  const p = products.find(x => x.id === id);
+  if(!p) return;
+  const newStock = isSoldOut(p) ? 1 : 0;
+  const { error } = await db.from('products').update({ stock: newStock }).eq('id', id);
+  if(error){ alert("Failed to update product: " + error.message); return; }
+  await fetchProducts();
+  renderAdminProducts();
 }
 
 async function editProduct(id){
-const p=products.find(x=>x.id===id);
-if(!p)return;
+  const p = products.find(x => x.id === id);
+  if(!p) return;
+  const name = prompt("Product name:", p.name);
+  if(name === null) return;
+  const priceInput = prompt("Price (ETB):", p.price);
+  if(priceInput === null) return;
+  const price = Number(priceInput);
+  if(!name.trim() || isNaN(price) || price < 0){ alert("❌ Enter a valid name and price."); return; }
+  const description = prompt("Description (shown in product details):", p.description || "");
+  if(description === null) return;
+  const specs = prompt("Specifications, one per line as Key: Value:", p.specs || "");
+  if(specs === null) return;
 
-const name=prompt("Product name:",p.name);
-if(name===null)return;
-
-const price=Number(prompt("Price:",p.price));
-if(!name.trim()||!Number.isFinite(price)){
-alert("Invalid product.");
-return;
-}
-
-const description=prompt("Description:",p.description||"");
-if(description===null)return;
-
-const specs=prompt("Specifications:",p.specs||"");
-if(specs===null)return;
-
-const {error}=await db.from("products")
-.update({
-name:name.trim(),
-price,
-description:description.trim(),
-specs:specs.trim()
-})
-.eq("id",id);
-
-if(error){
-alert("Failed to update: "+error.message);
-return;
-}
-
-await fetchProducts();
-renderAdmin();
+  const { error } = await db.from('products')
+    .update({ name: name.trim(), price, description: description.trim(), specs: specs.trim() })
+    .eq('id', id);
+  if(error){ alert("Failed to update product: " + error.message); return; }
+  await fetchProducts();
+  renderAdmin();
 }
 
 async function deleteProduct(id){
-const p=products.find(x=>x.id===id);
-
-if(!confirm("Delete "+(p?.name||"this product")+"?"))return;
-
-const {error}=await db.from("products").delete().eq("id",id);
-
-if(error){
-alert("Failed to delete: "+error.message);
-return;
-}
-
-await fetchProducts();
-renderAdmin();
+  const p = products.find(x => x.id === id);
+  if(!confirm("Delete \"" + (p ? p.name : "this product") + "\"? This can't be undone.")) return;
+  const { error } = await db.from('products').delete().eq('id', id);
+  if(error){ alert("Failed to delete product: " + error.message); return; }
+  await fetchProducts();
+  renderAdmin();
 }
 
 async function addProduct(e){
-e.preventDefault();
+  e.preventDefault();
+  const files = Array.from(document.getElementById("pImage").files || []);
+  if(!files.length){ alert("Please select at least 1 product image."); return; }
+  if(files.length > 5){ alert("❌ You can upload a maximum of 5 images."); return; }
 
-const files=Array.from(document.getElementById("pImage").files||[]);
+  const btn = document.getElementById("pAddBtn");
+  btn.disabled = true; btn.textContent = "Uploading & Adding...";
 
-if(!files.length){
-alert("Please select at least 1 image.");
-return;
+  const imageUrls = [];
+  for(let i=0;i<files.length;i++){
+    const file = files[i];
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const fileName = `product_${Date.now()}_${i}_${safeName}`;
+    const { error: uploadErr } = await db.storage.from('product-images').upload(fileName, file);
+    if(uploadErr){
+      alert("Image " + (i+1) + " upload failed: " + uploadErr.message);
+      btn.disabled = false; btn.textContent = "➕ Add Product";
+      return;
+    }
+    const { data: urlData } = db.storage.from('product-images').getPublicUrl(fileName);
+    if(urlData && urlData.publicUrl) imageUrls.push(urlData.publicUrl);
+  }
+
+  const newProd = {
+    name: document.getElementById("pName").value.trim(),
+    price: Number(document.getElementById("pPrice").value),
+    category: document.getElementById("pCategory").value,
+    stock: 1,
+    description: document.getElementById("pDescription").value.trim(),
+    specs: document.getElementById("pSpecs").value.trim(),
+    image_url: imageUrls[0],
+    product_images: imageUrls
+  };
+
+  const { error } = await db.from('products').insert([newProd]);
+
+  btn.disabled = false; btn.textContent = "➕ Add Product";
+
+  if(error){
+    alert("Failed to add product: " + error.message);
+  } else {
+    e.target.reset();
+    await fetchProducts();
+    renderAdmin();
+    alert("✅ Product added successfully!");
+  }
 }
 
-if(files.length>5){
-alert("Please select no more than 5 images.");
-return;
-}
+// ======================================================================
+// 12. REAL-TIME UPDATES, EVENT LISTENERS AND START-UP
+// ======================================================================
 
-const btn=document.getElementById("pAddBtn");
-btn.disabled=true;
-btn.textContent="Uploading...";
+db.channel('schema-db-changes')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+    fetchProducts();
+  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+    if(document.getElementById("myOrdersModal").style.display === "block") loadMyOrders();
+    if(!adminSignedIn) return;
+    if(payload.eventType === 'INSERT') beep();
+    refreshBadge();
+    if(document.getElementById("adminModal").style.display === "block"){
+      renderAdmin();
+    }
+  })
+  .subscribe();
 
-const imageUrls=[];
+// Restore the saved login session when the page opens
+db.auth.getSession().then(({ data }) => updateSessionUI(data.session));
 
-for(let i=0;i<files.length;i++){
-const file=files[i];
-const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-const path=`product_${Date.now()}_${i}_${safe}`;
-
-const {error}=await db.storage.from("product-images").upload(path,file,{
-upsert:false,
-contentType:file.type
+db.auth.onAuthStateChange((_event, session) => {
+  setTimeout(() => updateSessionUI(session), 0);
 });
 
-if(error){
-alert("Image upload failed: "+error.message);
-btn.disabled=false;
-btn.textContent="➕ Add Product";
-return;
-}
+document.getElementById("orderForm").addEventListener("input", e => { e.target.style.borderColor = ""; });
 
-const {data}=db.storage.from("product-images").getPublicUrl(path);
-imageUrls.push(data.publicUrl);
-}
+document.getElementById("search").addEventListener("input", render);
 
-const product={
-name:document.getElementById("pName").value.trim(),
-price:Number(document.getElementById("pPrice").value),
-category:document.getElementById("pCategory").value,
-stock:1,
-description:document.getElementById("pDescription").value.trim(),
-specs:document.getElementById("pSpecs").value.trim(),
-image_url:imageUrls[0],
-image_urls:imageUrls
-};
-
-const {error}=await db.from("products").insert([product]);
-
-btn.disabled=false;
-btn.textContent="➕ Add Product";
-
-if(error){
-alert("Failed to add product: "+error.message);
-return;
-}
-
-e.target.reset();
-document.getElementById("pImagePreview").innerHTML="";
-await fetchProducts();
-await renderAdmin();
-
-alert("Product added successfully.");
-}
-
-db.auth.getSession().then(({data})=>{
-currentUser=data.session?.user||null;
-});
-
-db.auth.onAuthStateChange((_event,session)=>{
-currentUser=session?.user||null;
-});
-
-db.channel("king-market-changes")
-.on("postgres_changes",{event:"*",schema:"public",table:"products"},()=>{
-fetchProducts();
-})
-.on("postgres_changes",{event:"*",schema:"public",table:"orders"},()=>{
-if(document.getElementById("myOrdersModal").style.display==="block")loadMyOrders();
-if(adminSignedIn&&document.getElementById("adminModal").style.display==="block")renderAdmin();
-})
-.subscribe();
+// Initial load
+renderAuthUI();
 
 renderContact();
+
 renderDepositInfo();
-loadDepositSetting();
+
+loadDepositAmount();
+
 fetchProducts();
 </script>
-
 </body>
 </html>
