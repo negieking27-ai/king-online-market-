@@ -75,6 +75,17 @@ body.loggedout header,body.loggedout main,body.loggedout .bottom-nav{display:non
 .gate-brand{text-align:center;color:#fff;margin:34px auto 6px;max-width:560px}
 .gate-brand h1{font-size:28px;margin:0 0 6px}
 .gate-brand div{font-size:14px;opacity:.9}
+
+/* ===== 11. WELCOME / HOW IT WORKS SCREEN ===== */
+#introModal{background:linear-gradient(160deg,#243b8f,#16245f);z-index:60}
+.intro-box{max-width:560px;margin:14px auto 30px;background:#fff;border-radius:16px;padding:20px;box-shadow:0 3px 12px #0001}
+.intro-box h2{margin:20px 0 10px;font-size:18px;color:#243b8f}
+.intro-box h2:first-child{margin-top:0}
+.intro-box p{line-height:1.6;color:#344054;margin:0}
+.intro-list{list-style:none;margin:0;padding:0}
+.intro-list li{background:#f7f9fc;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:14px;line-height:1.5;color:#344054}
+.intro-step{display:flex;gap:10px;align-items:flex-start}
+.intro-num{flex:none;width:26px;height:26px;border-radius:50%;background:#243b8f;color:#fff;font-weight:bold;font-size:13px;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 <body class="loggedout">
@@ -143,6 +154,35 @@ body.loggedout header,body.loggedout main,body.loggedout .bottom-nav{display:non
 <button class="submit" type="submit" id="orderSubmitBtn">✅ Place Order</button>
 </form></div></div>
 
+<!-- ===== POP-UP: WELCOME / HOW IT WORKS (first screen for new visitors) ===== -->
+<div id="introModal" class="modal">
+<div class="gate-brand"><h1>👑 King Online Market</h1><div>Buy • Order • Get Delivered on Campus</div></div>
+<div class="intro-box">
+<h2>ስለ King Online Market</h2>
+<p>King Online Market በካምፓስ ውስጥ ያሉ ተማሪዎች የሚፈልጉትን ዕቃ በስልካቸው አዘው ወደ ዶርማቸው እንዲደርስላቸው የሚያደርግ የኦንላይን ገበያ ነው።</p>
+
+<h2>✨ ጥቅሙ</h2>
+<ul class="intro-list">
+<li>🛍️ <b>ከዶርም ሳይወጡ ይገዛሉ</b> — ጊዜና ጉልበት ይቆጥባሉ።</li>
+<li>🚚 <b>እስከ ዶርምዎ ይደርሳል</b> — Block እና Dorm ቁጥርዎን ብቻ ይሞላሉ።</li>
+<li>📦 <b>ትዕዛዝዎን ይከታተላሉ</b> — በ "My Orders" ውስጥ የትዕዛዝዎን ሁኔታ ደረጃ በደረጃ ያያሉ።</li>
+<li>🔒 <b>ክፍያ ይረጋገጣል</b> — ቅድመ ክፍያዎን (Deposit) አድሚን ያረጋግጥልዎታል።</li>
+</ul>
+
+<h2>📖 እንዴት ይጠቀማሉ?</h2>
+<ul class="intro-list">
+<li class="intro-step"><span class="intro-num">1</span><span><b>ይመዝገቡ ወይም ይግቡ</b> — በስልክ ቁጥርዎ እና በ password (አንድ ጊዜ ብቻ ይመዘገባሉ)።</span></li>
+<li class="intro-step"><span class="intro-num">2</span><span><b>ምርት ይምረጡ</b> — ፎቶውን፣ ዋጋውንና ዝርዝሩን (View Detail) ይመልከቱ።</span></li>
+<li class="intro-step"><span class="intro-num">3</span><span><b>"Order Now" ይጫኑ</b> — ስም፣ ስልክ፣ Student ID፣ Block፣ Dorm፣ Section እና Department ይሙሉ።</span></li>
+<li class="intro-step"><span class="intro-num">4</span><span><b>ቅድመ ክፍያ ይላኩ</b> — በ CBE፣ BOA ወይም Telebirr ይላኩና የክፍያውን screenshot ይጫኑ።</span></li>
+<li class="intro-step"><span class="intro-num">5</span><span><b>ይከታተሉ ይረከቡ</b> — በ "My Orders" ሁኔታውን ይከታተሉ፤ ዕቃው ሲደርስ ይረከቡ።</span></li>
+</ul>
+
+<div style="background:#fffaeb;color:#93370d;border:1px solid #fedf89;border-radius:10px;padding:8px 10px;margin-top:14px;font-size:12px;line-height:1.5">⚠️ <b>Password አይርሱ!</b> ለእያንዳንዱ መግቢያ ያስፈልጋል። ይጻፉት ወይም በአእምሮዎ ይያዙት።</div>
+
+<button class="submit" type="button" onclick="finishIntro()">🚀 ጀምር — ወደ Login ሂድ</button>
+</div></div>
+
 <!-- ===== POP-UP: LOGIN / SIGN UP (the first screen people see) ===== -->
 <div id="authModal" class="modal"><div class="gate-brand"><h1>👑 King Online Market</h1><div>Buy • Order • Get Delivered on Campus</div></div><div class="modal-box">
 <h2 id="authTitle">👤 Login</h2>
@@ -156,6 +196,7 @@ body.loggedout header,body.loggedout main,body.loggedout .bottom-nav{display:non
 <label>Password *</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters">
 <button class="submit" id="authSubmitBtn" onclick="submitAuth()">Login</button>
 <p style="text-align:center;margin:14px 0 0;font-size:14px"><a href="javascript:void(0)" id="authToggle" onclick="toggleAuthMode()" style="color:#243b8f;font-weight:bold"></a></p>
+<p style="text-align:center;margin:10px 0 0;font-size:13px"><a href="javascript:void(0)" onclick="closeModal('authModal');openIntro()" style="color:#667085">ℹ️ ስለ King Online Market (አሰራርና አጠቃቀም)</a></p>
 </div></div>
 
 <!-- ===== POP-UP: MY ORDERS ===== -->
@@ -637,6 +678,22 @@ async function submitOrder(e){
 // 7. ACCOUNT: login gate, sign up, login, logout, session
 // ======================================================================
 
+// Welcome screen: shown once to new visitors, and again if they tap the "ℹ️" link
+function introSeen(){
+  try{ return localStorage.getItem("kom_intro_seen") === "1"; }catch(e){ return false; }
+}
+
+function openIntro(){
+  openModal("introModal");
+  document.getElementById("introModal").scrollTop = 0;
+}
+
+function finishIntro(){
+  try{ localStorage.setItem("kom_intro_seen", "1"); }catch(e){}
+  closeModal("introModal");
+  openAuth("login");
+}
+
 function renderAuthUI(){
   const area = document.getElementById("authArea");
   if(!currentUser){ area.innerHTML = ""; return; }
@@ -739,7 +796,11 @@ async function updateSessionUI(session){
     adminSignedIn = false;
     adminBtn.style.display = "none";
     nav.style.gridTemplateColumns = "repeat(3,1fr)";
-    if(document.getElementById("authModal").style.display !== "block") openAuth("login");
+    const introOpen = document.getElementById("introModal").style.display === "block";
+    const authOpen = document.getElementById("authModal").style.display === "block";
+    if(!introOpen && !authOpen){
+      if(introSeen()) openAuth("login"); else openIntro();
+    }
     setBadge(0);
     document.getElementById("adminModal").style.display = "none";
     document.getElementById("myOrdersModal").style.display = "none";
@@ -748,6 +809,7 @@ async function updateSessionUI(session){
   const { data: roleRow } = await db.from("user_roles")
     .select("role").eq("user_id", session.user.id).maybeSingle();
   closeModal("authModal");
+  closeModal("introModal");
   adminSignedIn = !!roleRow && roleRow.role === "admin";
   adminBtn.style.display = adminSignedIn ? "" : "none";
   nav.style.gridTemplateColumns = adminSignedIn ? "repeat(4,1fr)" : "repeat(3,1fr)";
