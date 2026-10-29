@@ -223,8 +223,8 @@ body.loggedout header,body.loggedout main,body.loggedout .bottom-nav{display:non
 <label>Product Name *</label><input id="pName" required>
 <label>Price (ETB) *</label><input id="pPrice" type="number" min="0" required>
 <label>Category</label><select id="pCategory"><option>Electronics</option><option>Clothes</option><option>Shoes</option><option>Bags</option><option>Books</option><option>Personal Care</option><option>Food & Snacks</option><option>Other</option></select>
-<label>Product Images * (1–5 images)</label>
-<input id="pImage" type="file" accept="image/*" multiple required onchange="previewProductImages(this)">
+<label>Product Images * (1–5 images — add one photo at a time)</label>
+<input id="pImage" type="file" accept="image/*" onchange="previewProductImages(this)">
 <div id="productImagePreview" class="image-preview-grid"></div>
 <small style="color:#667085">You can select up to 5 images. The first image will be the main product image.</small>
 <label>Description</label><textarea id="pDescription" placeholder="Short description shown in product details."></textarea>
@@ -1101,24 +1101,37 @@ async function deleteOrder(id){
 // 11. ADMIN: products (add, edit, sold out, delete) + deposit setting
 // ======================================================================
 
-let productImages = [];   // shrunken photos chosen for the new product
+let productImages = [];   // shrunken photos chosen for the new product (one at a time, max 5)
 
-async function previewProductImages(input){
-  const files = Array.from(input.files || []);
+function drawProductPreview(){
   const box = document.getElementById("productImagePreview");
-  productImages = [];
-  if(files.length > 5){
-    alert("❌ You can select a maximum of 5 images.");
-    input.value = "";
-    box.innerHTML = "";
+  box.innerHTML = productImages.map((f, i) => `
+    <div style="position:relative;display:inline-block">
+      <img src="${URL.createObjectURL(f)}" alt="Product preview">
+      <button type="button" onclick="removeProductImage(${i})"
+        style="position:absolute;top:2px;right:2px;border:0;border-radius:50%;width:22px;height:22px;background:#c0392b;color:#fff;font-weight:bold;cursor:pointer">×</button>
+    </div>`).join("");
+}
+
+function removeProductImage(i){
+  productImages.splice(i, 1);
+  drawProductPreview();
+}
+
+// Each pick adds ONE photo. A single-photo picker is far lighter on phones than the multi-select one.
+async function previewProductImages(input){
+  const raw = input.files && input.files[0];
+  input.value = "";
+  if(!raw) return;
+  if(productImages.length >= 5){
+    alert("❌ You can add a maximum of 5 images.");
     return;
   }
-  box.textContent = "ፎቶዎች እየተዘጋጁ ነው...";
-  for(const f of files){
-    const small = await shrinkImage(f);
-    if(small) productImages.push(small);
-  }
-  box.innerHTML = productImages.map(f => `<img src="${URL.createObjectURL(f)}" alt="Product preview">`).join("");
+  const box = document.getElementById("productImagePreview");
+  box.insertAdjacentHTML("beforeend", "<span>ፎቶ እየተዘጋጀ ነው...</span>");
+  const small = await shrinkImage(raw);
+  if(small) productImages.push(small);
+  drawProductPreview();
 }
 
 async function saveDepositAmount(){
