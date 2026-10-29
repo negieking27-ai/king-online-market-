@@ -334,6 +334,24 @@ function scrollToProducts(){
   if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
+// Shrinks big phone photos (max 1000px wide, JPEG) so the browser does not run out of memory
+async function shrinkImage(file){
+  try{
+    const bmp = await createImageBitmap(file, { resizeWidth: 1000, resizeQuality: "medium" });
+    const canvas = document.createElement("canvas");
+    canvas.width = bmp.width; canvas.height = bmp.height;
+    canvas.getContext("2d").drawImage(bmp, 0, 0);
+    if(bmp.close) bmp.close();
+    const blob = await new Promise(res => canvas.toBlob(res, "image/jpeg", 0.82));
+    canvas.width = canvas.height = 0;
+    if(!blob) return file;
+    return new File([blob], ((file.name || "photo").replace(/\.[^.]+$/, "")) + ".jpg", { type: "image/jpeg" });
+  }catch(e){
+    if(file.size > 5242880){ alert("❌ ፎቶው በጣም ትልቅ ነው፣ ትንሽ ፎቶ ይሞክሩ።"); return null; }
+    return file;
+  }
+}
+
 function isSoldOut(p){ return Number(p.stock ?? 1) <= 0; }
 
 function toIntlPhone(phone){
@@ -487,11 +505,13 @@ function openOrder(id){
   openModal("orderModal");
 }
 
-function setPhoto(input){
-  const file = input.files[0];
+async function setPhoto(input){
+  const raw = input.files[0];
+  if(!raw) return;
+  input.value = "";
+  const file = await shrinkImage(raw);
   if(!file) return;
   studentPhotoFile = file;
-  input.value = "";
   const url = URL.createObjectURL(file);
   document.getElementById("photoPreview").innerHTML = `
     <div style="display:flex;gap:10px;align-items:center">
@@ -506,11 +526,13 @@ function clearPhoto(){
   document.getElementById("photoPreview").innerHTML = "";
 }
 
-function setPaymentProof(input){
-  const file = input.files[0];
+async function setPaymentProof(input){
+  const raw = input.files[0];
+  if(!raw) return;
+  input.value = "";
+  const file = await shrinkImage(raw);
   if(!file) return;
   paymentProofFile = file;
-  input.value = "";
   const url = URL.createObjectURL(file);
   document.getElementById("paymentProofPreview").innerHTML = `
     <div style="display:flex;gap:10px;align-items:center">
@@ -1079,16 +1101,24 @@ async function deleteOrder(id){
 // 11. ADMIN: products (add, edit, sold out, delete) + deposit setting
 // ======================================================================
 
-function previewProductImages(input){
+let productImages = [];   // shrunken photos chosen for the new product
+
+async function previewProductImages(input){
   const files = Array.from(input.files || []);
   const box = document.getElementById("productImagePreview");
+  productImages = [];
   if(files.length > 5){
     alert("❌ You can select a maximum of 5 images.");
     input.value = "";
     box.innerHTML = "";
     return;
   }
-  box.innerHTML = files.map(file => `<img src="${URL.createObjectURL(file)}" alt="Product preview">`).join("");
+  box.textContent = "ፎቶዎች እየተዘጋጁ ነው...";
+  for(const f of files){
+    const small = await shrinkImage(f);
+    if(small) productImages.push(small);
+  }
+  box.innerHTML = productImages.map(f => `<img src="${URL.createObjectURL(f)}" alt="Product preview">`).join("");
 }
 
 async function saveDepositAmount(){
@@ -1166,7 +1196,7 @@ async function deleteProduct(id){
 
 async function addProduct(e){
   e.preventDefault();
-  const files = Array.from(document.getElementById("pImage").files || []);
+  const files = productImages;
   if(!files.length){ alert("Please select at least 1 product image."); return; }
   if(files.length > 5){ alert("❌ You can upload a maximum of 5 images."); return; }
 
@@ -1207,6 +1237,8 @@ async function addProduct(e){
     alert("Failed to add product: " + error.message);
   } else {
     e.target.reset();
+    productImages = [];
+    document.getElementById("productImagePreview").innerHTML = "";
     await fetchProducts();
     renderAdmin();
     alert("✅ Product added successfully!");
